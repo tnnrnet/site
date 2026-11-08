@@ -1,0 +1,29 @@
+# Site identity: everything that names this site, in one place.
+#
+# build.rs reads this file and bakes it into src/content.rs (for the app and
+# server), sitemap.xml, feed.xml, robots.txt and site.webmanifest. Pages live
+# in content/; this is only the frame around them.
+
+# Header, <title>, og:site_name, RSS title, raw-markdown attribution
+name: example.com
+# Home-screen label (site.webmanifest)
+short_name: example
+# Production host: pages at https://<domain>, raw markdown at https://raw.<domain>
+domain: example.com
+# Home page meta description
+description: "A static-first personal site built with Leptos."
+# RSS channel description
+feed_description: "Posts from example.com"
+# twitter:site handle (optional: leave it out to drop the tag)
+# twitter: "@example"
+# Public repo of the site's engine, linked as "View source" in the footer
+# (optional: leave it out to drop the link)
+# source: "https://github.com/example/site"
+
+# Home page subtitle: one is picked at random and typed out
+splashes:
+  - "“Edit site.yaml to change me.”"
+  - "“Baked into the binary at build time.”"
+  - "“Works without JavaScript.”"
+  - "“Every page has a raw markdown twin.”"
+  - "“Hello, world!”"

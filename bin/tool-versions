@@ -1,0 +1,12 @@
+# Build tool versions, sourced by bin/cloud-setup, bin/tool-cache and the
+# CI/Tools workflows. One place to bump; run bin/verify after a bump.
+# (wasm-bindgen's CLI version comes from Cargo.lock: it must match the crate.)
+CARGO_LEPTOS_VERSION=0.3.11
+SASS_VERSION=1.107.1
+BINARYEN_VERSION=132.0.0
+
+# wasm-bindgen crate version in Cargo.lock (the CLI must match it exactly)
+wasm_bindgen_version() {
+  awk '/^name = "wasm-bindgen"$/ {getline; gsub(/version = |"/, ""); print; exit}' \
+    "$(dirname "${BASH_SOURCE[0]}")/../Cargo.lock"
+}

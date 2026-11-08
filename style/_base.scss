@@ -1,0 +1,124 @@
+// ============================================
+// Reset, Base & Typography
+// ============================================
+
+// --------------------------------------------
+// Reset & Base
+// --------------------------------------------
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  background: var(--bg-page);
+  color: var(--text-body);
+  line-height: 1.4; // Butterick recommends 120-145%
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+
+  // Monospace font mode (toggled via settings; class lives on <html> so
+  // it can be applied before first paint)
+  html.monospace & {
+    font-family: var(--font-mono);
+  }
+
+  // TODO: Typography mode - a "reader" toggle that swaps to serif font
+  // (e.g., Charter), tightens line-height to ~1.3, possibly bumps font size.
+  // Would pair with existing monospace toggle in tuning panel.
+
+  // Left edge tricolor stripe (vertical bands)
+  &::before {
+    content: '';
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 90px;
+    z-index: 5;
+    background: linear-gradient(
+      to right,
+      var(--accent-red) 0%,
+      var(--accent-red) 33.33%,
+      var(--accent-orange) 33.33%,
+      var(--accent-orange) 66.66%,
+      var(--accent-gold) 66.66%,
+      var(--accent-gold) 100%
+    );
+    transition: width 0.2s ease-out;
+  }
+
+  // Hide stripes mode - collapse to zero width
+  html.no-stripes &::before {
+    width: 0;
+  }
+}
+
+// --------------------------------------------
+// Typography
+// --------------------------------------------
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-heading);
+  line-height: 1.3;
+  margin-bottom: 0.5em;
+}
+
+h1 { font-size: 2rem; }
+h2 { font-size: 1.5rem; margin-top: 1.5em; }
+h3 { font-size: 1.25rem; margin-top: 1.25em; }
+
+p {
+  margin-bottom: 1em;
+}
+
+a {
+  color: var(--accent-red);
+  text-decoration: none;
+  // TODO: Consider persistent underlines for accessibility (Butterick + WCAG).
+  // Could be tied to high-contrast mode or a separate "traditional links" toggle.
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+strong { font-weight: 600; }
+
+ul, ol {
+  margin: 1em 0;
+  padding-left: 1.5em;
+}
+
+li {
+  margin-bottom: 0.25em;
+}
+
+code {
+  font-family: 'IBM Plex Mono', 'SF Mono', 'Consolas', monospace;
+  font-size: 0.9em;
+  background: var(--bg-inset);
+  padding: 0.15em 0.4em;
+}
+
+
+pre {
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 1.5em 0;
+  font-size: 0.85rem;
+
+  // Fallback for non-highlighted code blocks
+  &:not([style]) {
+    background: var(--neutral-800);
+    color: var(--neutral-200);
+  }
+
+  code {
+    background: none;
+    padding: 0;
+  }
+}

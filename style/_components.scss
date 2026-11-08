@@ -1,0 +1,961 @@
+// ============================================
+// Site Components & Page Styles
+// ============================================
+
+// --------------------------------------------
+// Layout
+// --------------------------------------------
+main {
+  max-width: 700px;
+  width: 100%;
+  margin: 0 auto;
+  padding: clamp(15px, 4vw, 30px);
+  background: transparent;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  position: relative;
+  z-index: 10; // Above stripe
+  flex: 1; // Grow to fill available space, pushes footer down
+}
+
+// --------------------------------------------
+// Site Header
+// --------------------------------------------
+.site-header {
+  background: var(--bg-chrome);
+  position: relative;
+  z-index: 1; // Behind stripe
+
+  // Full-bleed: body is already viewport-width (100vw would add the
+  // scrollbar width and cause horizontal scroll on Windows/Linux)
+  width: 100%;
+
+  .site-header-content {
+    padding: 30px 30px 30px 120px; // 90px stripe + 30px gap
+    position: relative;
+    z-index: 10; // Text above stripe
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .breadcrumbs {
+    display: flex;
+    flex-wrap: wrap; // Long post slugs wrap instead of pushing Tune off-screen
+    align-items: baseline;
+    gap: 0.4ch;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+
+    @media (max-width: 600px) {
+      font-size: 1rem;
+    }
+  }
+
+  .tuning-button {
+    flex-shrink: 0;
+  }
+
+  .site-title {
+    color: var(--neutral-50);
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      color: var(--accent-gold);
+      text-decoration: none;
+    }
+  }
+
+  .breadcrumb-sep {
+    color: var(--neutral-500);
+    font-weight: 300;
+  }
+
+  .breadcrumb-segment {
+    color: var(--neutral-200);
+    font-weight: 300;
+    text-decoration: none;
+
+    &:hover {
+      color: var(--accent-gold);
+    }
+
+    &.inactive {
+      color: var(--neutral-500);
+      cursor: default;
+
+      &:hover {
+        color: var(--neutral-500);
+      }
+    }
+  }
+}
+
+// --------------------------------------------
+// Tuning Button (Header) - Vertical Square Style
+// --------------------------------------------
+.tuning-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.5rem;
+  min-width: 48px;
+  background: linear-gradient(180deg, var(--neutral-600), var(--neutral-700));
+  border: 2px solid;
+  border-top-color: var(--neutral-500);
+  border-left-color: var(--neutral-500);
+  border-bottom-color: var(--neutral-800);
+  border-right-color: var(--neutral-800);
+  border-radius: 2px;
+  cursor: pointer;
+  text-decoration: none; // It's a link (works without JS), styled as a button
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: linear-gradient(180deg, var(--neutral-500), var(--neutral-600));
+    text-decoration: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-gold);
+    outline-offset: 2px;
+  }
+
+  // DOWN state (on /tuning) - latched depressed appearance
+  &.on-tuning {
+    background: linear-gradient(180deg, var(--neutral-700), var(--neutral-800));
+    border-top-color: var(--neutral-800);
+    border-left-color: var(--neutral-800);
+    border-bottom-color: var(--neutral-500);
+    border-right-color: var(--neutral-500);
+  }
+}
+
+.tuning-led {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--neutral-700);
+  box-shadow: inset 1px 1px 2px rgba(0,0,0,0.5);
+  border: 1px solid transparent; // Transparent during breathing
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: led-breathe 5s ease-in-out infinite;
+    animation-delay: -2.5s; // Start from dim (midpoint)
+  }
+}
+
+@keyframes led-breathe {
+  0%, 100% {
+    background: var(--accent-orange);
+    box-shadow: 0 0 6px var(--accent-orange);
+  }
+  50% {
+    background: hsl(25, 40%, 30%);
+    box-shadow: none;
+  }
+}
+
+// On tuning page: LED solid, no breathing
+.tuning-button.on-tuning .tuning-led {
+  animation: none;
+  background: var(--accent-orange);
+  box-shadow:
+    inset 1px 1px 2px rgba(255,255,255,0.3),
+    0 0 8px var(--accent-orange),
+    0 0 16px rgba(210, 140, 90, 0.4);
+  border-color: transparent;
+}
+
+// Plain white text label
+.tuning-label {
+  color: var(--neutral-100);
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+// --------------------------------------------
+// Site Footer
+// --------------------------------------------
+.site-footer {
+  background: var(--bg-chrome);
+  position: relative;
+  z-index: 1;
+
+  // Full-bleed: body is already viewport-width (100vw would add the
+  // scrollbar width and cause horizontal scroll on Windows/Linux)
+  width: 100%;
+
+  .site-footer-content {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 20px clamp(15px, 4vw, 30px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+
+    // Below 900px, natural centering margin < 100px, so force it to clear stripe
+    @media (max-width: 900px) {
+      margin-left: 100px;
+      margin-right: auto;
+    }
+  }
+
+  .footer-message {
+    color: var(--neutral-300);
+    font-size: 0.85rem;
+
+    a {
+      color: var(--neutral-100);
+      text-decoration: none;
+
+      &:hover {
+        color: var(--accent-gold);
+      }
+    }
+  }
+
+  .footer-settings {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .setting-link {
+    color: var(--neutral-300);
+    font-size: 0.85rem;
+    text-decoration: none;
+
+    &:hover {
+      color: var(--accent-gold);
+      text-decoration: underline;
+    }
+  }
+
+  .setting-btn {
+    background: var(--neutral-500);
+    color: var(--neutral-200);
+    padding: 0.35rem 0.6rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-family: inherit;
+
+    // Beveled borders (3px)
+    border-width: 3px;
+    border-style: solid;
+    border-top-color: var(--neutral-400);
+    border-left-color: var(--neutral-400);
+    border-bottom-color: var(--neutral-700);
+    border-right-color: var(--neutral-700);
+
+    &:hover {
+      background: var(--neutral-400);
+      color: var(--neutral-100);
+    }
+
+    // Pressed/active state - inverted bevel
+    &.active {
+      border-top-color: var(--neutral-700);
+      border-left-color: var(--neutral-700);
+      border-bottom-color: var(--neutral-400);
+      border-right-color: var(--neutral-400);
+    }
+  }
+}
+
+// --------------------------------------------
+// Stripe Component
+// --------------------------------------------
+.stripe-tri {
+  display: flex;
+  overflow: hidden;
+
+  > span {
+    flex: 1;
+  }
+
+  .s-red    { background: var(--accent-red); }
+  .s-orange { background: var(--accent-orange); }
+  .s-gold   { background: var(--accent-gold); }
+}
+
+.stripe-sm { height: 6px; }
+.stripe-md { height: 12px; }
+.stripe-lg { height: 18px; }
+
+// Vertical stripes
+.stripe-tri-vertical {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  > span {
+    flex: 1;
+  }
+
+  .s-red    { background: var(--accent-red); }
+  .s-orange { background: var(--accent-orange); }
+  .s-gold   { background: var(--accent-gold); }
+}
+
+.stripe-v-sm { width: 6px; }
+.stripe-v-md { width: 12px; }
+.stripe-v-lg { width: 18px; }
+
+// Hide stripes mode (accessibility) - blend inline stripes with background
+.no-stripes .stripe-tri,
+.no-stripes .stripe-tri-vertical {
+  .s-red, .s-orange, .s-gold {
+    background: var(--bg-page);
+  }
+}
+
+// Hide stripes mode - adjust content padding (stripe collapses to 0)
+.no-stripes {
+  .site-header-content {
+    padding-left: 30px;  // Remove stripe clearance, keep gap
+    transition: padding-left 0.2s ease-out;
+  }
+
+  .site-footer-content {
+    margin-left: auto;  // Center normally without stripe offset
+
+    @media (max-width: 900px) {
+      margin-left: auto;  // Override the 100px margin
+    }
+  }
+}
+
+// Add transition to header content for smooth stripe toggle
+.site-header-content {
+  transition: padding-left 0.2s ease-out;
+}
+
+// --------------------------------------------
+// Buttons (Chunky Retro Style)
+// --------------------------------------------
+.btn {
+  display: inline-block;
+  padding: 0.6rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  background: var(--bg-surface);
+  color: var(--text-heading);
+  text-decoration: none;
+
+  // Beveled borders (3px)
+  border-width: 3px;
+  border-style: solid;
+  border-top-color: var(--neutral-200);
+  border-left-color: var(--neutral-200);
+  border-bottom-color: var(--neutral-600);
+  border-right-color: var(--neutral-600);
+
+  &:hover {
+    background: var(--neutral-200);
+    text-decoration: none;
+  }
+
+  &:active {
+    // Invert bevel for pressed look
+    border-top-color: var(--neutral-600);
+    border-left-color: var(--neutral-600);
+    border-bottom-color: var(--neutral-200);
+    border-right-color: var(--neutral-200);
+  }
+}
+
+.btn-red {
+  background: var(--accent-red);
+  border-top-color: var(--accent-red-light);
+  border-left-color: var(--accent-red-light);
+  border-bottom-color: var(--accent-red-dark);
+  border-right-color: var(--accent-red-dark);
+
+  &:hover { background: hsl(5, 62%, 55%); }
+  &:active {
+    border-top-color: var(--accent-red-dark);
+    border-left-color: var(--accent-red-dark);
+    border-bottom-color: var(--accent-red-light);
+    border-right-color: var(--accent-red-light);
+  }
+}
+
+.btn-orange {
+  background: var(--accent-orange);
+  border-top-color: var(--accent-orange-light);
+  border-left-color: var(--accent-orange-light);
+  border-bottom-color: var(--accent-orange-dark);
+  border-right-color: var(--accent-orange-dark);
+
+  &:hover { background: hsl(25, 62%, 55%); }
+  &:active {
+    border-top-color: var(--accent-orange-dark);
+    border-left-color: var(--accent-orange-dark);
+    border-bottom-color: var(--accent-orange-light);
+    border-right-color: var(--accent-orange-light);
+  }
+}
+
+.btn-gold {
+  background: var(--accent-gold);
+  border-top-color: var(--accent-gold-light);
+  border-left-color: var(--accent-gold-light);
+  border-bottom-color: var(--accent-gold-dark);
+  border-right-color: var(--accent-gold-dark);
+
+  &:hover { background: hsl(45, 62%, 55%); }
+  &:active {
+    border-top-color: var(--accent-gold-dark);
+    border-left-color: var(--accent-gold-dark);
+    border-bottom-color: var(--accent-gold-light);
+    border-right-color: var(--accent-gold-light);
+  }
+}
+
+.btn-ghost {
+  background: transparent;
+  border-top-color: var(--neutral-300);
+  border-left-color: var(--neutral-300);
+  border-bottom-color: var(--neutral-500);
+  border-right-color: var(--neutral-500);
+  color: var(--text-body);
+
+  &:hover { background: var(--neutral-200); }
+  &:active {
+    border-top-color: var(--neutral-500);
+    border-left-color: var(--neutral-500);
+    border-bottom-color: var(--neutral-300);
+    border-right-color: var(--neutral-300);
+  }
+}
+
+// --------------------------------------------
+// Home Page
+// --------------------------------------------
+.home {
+  .subtitle-card {
+    background: var(--bg-title);
+    border: 2px solid var(--border-title);
+    padding: clamp(20px, 5vw, 30px);
+    // Overcome main's padding + 6px overlap
+    margin-top: calc(-1 * clamp(15px, 4vw, 30px) - 6px);
+    position: relative;
+    z-index: 11;
+    overflow: hidden;
+
+    p {
+      margin: 0;
+      color: var(--neutral-100);
+      font-size: 1.1rem;
+      // Ensure consistent one-line height even when empty
+      min-height: 1.4em;
+    }
+
+    // Hidden sizer: establishes the card's content height
+    // NOT position: absolute - must take up space in layout
+    .splash-sizer {
+      visibility: hidden;
+    }
+
+    // Visible typing text: purely visual, doesn't affect layout
+    .splash-text {
+      position: absolute;
+      top: clamp(20px, 5vw, 30px);
+      left: clamp(20px, 5vw, 30px);
+      right: clamp(20px, 5vw, 30px);
+      white-space: pre-wrap;  // Preserve explicit \n for preemptive word wrapping
+    }
+
+    // Growing state: animate max-height via transition
+    &.growing {
+      transition: max-height 0.3s ease-out;
+    }
+  }
+
+  // Reduced motion: skip grow animation
+  @media (prefers-reduced-motion: reduce) {
+    .subtitle-card {
+      transition: none !important;
+    }
+  }
+
+  .page-list {
+    background: var(--bg-surface);
+    border: 2px solid var(--border);
+    padding: clamp(20px, 5vw, 30px);
+
+    h2 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      a {
+        font-weight: 500;
+      }
+
+      .date {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        font-family: 'IBM Plex Mono', monospace;
+      }
+    }
+  }
+}
+
+// --------------------------------------------
+// Page / Article View
+// --------------------------------------------
+.page {
+  // Container for article cards
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.page-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.page-header {
+  background: var(--bg-title);
+  color: var(--neutral-100);
+  padding: clamp(20px, 5vw, 30px);
+  border: 2px solid var(--border-title);
+  // Overcome main's padding + 6px overlap
+  margin-top: calc(-1 * clamp(15px, 4vw, 30px) - 6px);
+  position: relative;
+  z-index: 11;
+
+  h1 {
+    color: var(--neutral-50);
+    margin-bottom: 0;
+  }
+
+  .date {
+    margin-top: 0.25em;
+    color: var(--neutral-400);
+    font-size: 0.9rem;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .raw-link {
+    position: absolute;
+    bottom: clamp(12px, 3vw, 20px);
+    right: clamp(20px, 5vw, 30px);
+    font-size: 0.75rem;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--neutral-500);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--neutral-300);
+      text-decoration: underline;
+    }
+  }
+}
+
+// LLM tip banner (below page-header, togglable)
+.llm-tip {
+  background: var(--bg-chrome);
+  color: var(--neutral-200);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  overflow: hidden;
+
+  // Default: hidden (SSR renders collapsed, no flash for power users)
+  max-height: 0;
+  padding: 0 clamp(20px, 5vw, 30px);
+  border: 0 solid var(--border);
+  opacity: 0;
+  margin-top: -30px; // Counteract flex gap
+  pointer-events: none;
+  visibility: hidden; // Out of the tab order and accessibility tree
+
+  // Visible state (after JS determines should show)
+  &:not(.hidden) {
+    max-height: 100px;
+    padding: 0.75rem clamp(20px, 5vw, 30px);
+    border-width: 2px;
+    opacity: 1;
+    margin-top: 0;
+    pointer-events: auto;
+    visibility: visible;
+  }
+
+  // Entrance animation (two-part: smooth expand, then stepped scanline)
+  &.entering:not(.hidden) {
+    // Clip container completely during expand (invisible but takes space)
+    // Negative inset ensures borders aren't clipped during scanline
+    clip-path: inset(-2px -2px 100% -2px);
+    animation:
+      tip-expand 0.3s ease-out forwards,
+      tip-scanline 0.4s steps(10) 0.3s forwards,
+      tip-clip-cleanup 0.01s linear 0.7s forwards;
+  }
+
+  // User toggle animation (only after user has interacted)
+  &.can-animate {
+    transition:
+      max-height 0.2s steps(5),
+      padding 0.2s steps(5),
+      border-width 0.2s steps(5),
+      margin-top 0.2s steps(5),
+      opacity 0.15s steps(3) 0.2s,
+      visibility 0s linear 0.35s; // Hide only after the collapse finishes
+
+    // Showing: become visible immediately (keep the opacity delay)
+    &:not(.hidden) {
+      transition-delay: 0s, 0s, 0s, 0s, 0.2s, 0s;
+    }
+  }
+
+  // When entering, disable transition (let animation handle it)
+  &.entering {
+    transition: none;
+  }
+
+  a {
+    color: var(--neutral-100);
+    text-decoration: underline;
+
+    &:hover {
+      color: var(--accent-gold);
+    }
+  }
+
+  .hide-btn {
+    color: var(--neutral-400);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.75rem;
+    // Align with .raw-link above (no padding on right side)
+    padding: 0.25rem 0 0.25rem 0.5rem;
+    margin-right: 0;
+
+    &:hover {
+      color: var(--neutral-200);
+    }
+  }
+}
+
+// Entrance animations for LLM tip banner
+@keyframes tip-expand {
+  from {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-width: 0;
+    margin-top: -30px;
+  }
+  to {
+    max-height: 100px;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-width: 2px;
+    margin-top: 0;
+  }
+}
+
+@keyframes tip-scanline {
+  from { clip-path: inset(-2px -2px 100% -2px); }
+  to { clip-path: inset(-2px); }
+}
+
+@keyframes tip-clip-cleanup {
+  to { clip-path: none; }
+}
+
+.page-content {
+  background: var(--bg-surface);
+  border: 2px solid var(--border);
+  padding: clamp(20px, 5vw, 30px);
+
+  > *:first-child {
+    margin-top: 0;
+  }
+
+  > *:last-child {
+    margin-bottom: 0;
+  }
+
+  // Heading anchor links - look like normal headings
+  h1, h2, h3, h4, h5, h6 {
+    a {
+      color: inherit;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+        text-decoration-color: var(--accent-gold);
+        text-underline-offset: 0.15em;
+      }
+    }
+  }
+}
+
+.page-footer {
+  background: var(--bg-surface);
+  border: 2px solid var(--border);
+  padding: clamp(20px, 5vw, 30px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  .download-md {
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .llm-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+}
+
+// --------------------------------------------
+// Callouts
+// --------------------------------------------
+.callout {
+  padding: 1rem 1.25rem;
+  margin: 1.5em 0;
+  border-left: 4px solid;
+
+  > *:first-child {
+    margin-top: 0;
+  }
+
+  > *:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.callout-tip {
+  background: linear-gradient(90deg, hsla(45, 62%, 60%, 0.15), transparent);
+  border-left-color: var(--accent-gold);
+
+  &::before {
+    content: "Tip";
+    display: block;
+    font-weight: 600;
+    color: var(--accent-gold);
+    margin-bottom: 0.5em;
+  }
+}
+
+.callout-warning {
+  background: linear-gradient(90deg, hsla(5, 62%, 60%, 0.15), transparent);
+  border-left-color: var(--accent-red);
+
+  &::before {
+    content: "Warning";
+    display: block;
+    font-weight: 600;
+    color: var(--accent-red);
+    margin-bottom: 0.5em;
+  }
+}
+
+.callout-note {
+  background: linear-gradient(90deg, hsla(25, 62%, 60%, 0.15), transparent);
+  border-left-color: var(--accent-orange);
+
+  &::before {
+    content: "Note";
+    display: block;
+    font-weight: 600;
+    color: var(--accent-orange);
+    margin-bottom: 0.5em;
+  }
+}
+
+// Out-of-date notice (old posts, below page-header)
+// Card-shaped, with the note callout's orange edge and wash
+.stale-notice {
+  background:
+    linear-gradient(90deg, hsla(25, 62%, 60%, 0.15), transparent),
+    var(--bg-surface);
+  color: var(--text-body);
+  border: 2px solid var(--border);
+  border-left: 6px solid var(--accent-orange);
+  padding: 0.75rem clamp(20px, 5vw, 30px);
+  font-size: 0.9rem;
+
+  p {
+    margin: 0;
+  }
+
+  time {
+    white-space: nowrap;
+  }
+}
+
+// --------------------------------------------
+// 404 Page
+// --------------------------------------------
+// Laid out like any other page (.page-header, .page-content); only the
+// requested path needs help, since a long one has no spaces to wrap at
+.not-found code {
+  overflow-wrap: anywhere;
+}
+
+// --------------------------------------------
+// Cards
+// --------------------------------------------
+.card {
+  background: var(--bg-surface);
+  border: 2px solid var(--border);
+  overflow: hidden;
+}
+
+.card-body {
+  padding: 1.25rem;
+}
+
+.card-title {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-heading);
+}
+
+.card-text {
+  font-size: 0.9rem;
+  color: var(--text-body);
+  margin-bottom: 1rem;
+}
+
+// --------------------------------------------
+// Inset Panel
+// --------------------------------------------
+.inset {
+  background: var(--bg-inset);
+  padding: 1rem;
+  font-size: 0.85rem;
+  font-family: 'IBM Plex Mono', 'SF Mono', 'Consolas', monospace;
+  color: var(--text-body);
+  border: 1px solid var(--border);
+}
+
+.inset-dark {
+  background: var(--neutral-800);
+  border-color: var(--neutral-700);
+  color: var(--neutral-300);
+}
+
+// --------------------------------------------
+// Side Stripe Layout
+// --------------------------------------------
+.side-stripe-container {
+  display: flex;
+  overflow: hidden;
+  border: 2px solid var(--neutral-700);
+}
+
+.side-stripe-content {
+  flex: 1;
+  padding: 1.25rem;
+  background: var(--bg-surface);
+}
+
+// --------------------------------------------
+// Palette Display
+// --------------------------------------------
+.palette-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.swatch {
+  width: 80px;
+  height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 6px;
+  font-size: 0.65rem;
+  font-family: 'IBM Plex Mono', monospace;
+  border: 1px solid var(--border);
+}
+
+.swatch-label {
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+// --------------------------------------------
+// Sample Page Utilities
+// --------------------------------------------
+.demo-section {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+
+  &:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+}
+
+.demo-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: 'IBM Plex Mono', monospace;
+  margin-bottom: 0.5rem;
+}
+
+.button-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+// --------------------------------------------
+// Theme: Dusty Trail
+// Explicitly scoped for per-page theming
+// --------------------------------------------
+.theme-dusty-trail {
+  // Uses default :root variables
+  // Additional theme-specific overrides can go here
+}

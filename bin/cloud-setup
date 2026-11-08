@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+# Install what building this site needs on a Linux box that has never built it:
+# a cloud Claude Code session, a fresh CI runner, a bare VM. Idempotent: each
+# step is skipped when its tool is already present, so it is also safe to run
+# from the SessionStart hook in .claude/settings.json.
+#
+#   bin/cloud-setup          install everything, compiling tools if need be
+#   bin/cloud-setup --fast   never compile tools from source (for the
+#                            environment setup script, which has ~5 minutes)
+#
+# For claude.ai/code, the environment's setup script field (it runs from
+# /home/user with the repo already cloned there, in a directory named after it):
+#   cd <repo> && bash bin/cloud-setup --fast
+# The platform runs it, snapshots the filesystem, and starts later sessions
+# from the snapshot for about a week. Then the SessionStart hook in
+# .claude/settings.json runs plain bin/cloud-setup at the start of each
+# session, which finishes whatever the setup script couldn't.
+#
+# What it installs, and why not just let cargo-leptos download things:
+#   rust toolchain   rust-toolchain.toml (rustup reads it)
+#   cargo-leptos     the build tool
+#   wasm-bindgen     must match the wasm-bindgen in Cargo.lock
+#   sass             cargo-leptos downloads dart-sass from GitHub releases,
+#                    which cloud sandboxes block; a `sass` on PATH wins
+#   wasm-opt         same story (release builds only); from npm's binaryen
+# cargo-leptos and wasm-bindgen come prebuilt from this repo's `tools`
+# release when possible (seconds; see bin/tool-cache), else compile from
+# crates.io (~15 minutes, once per snapshot).
+#
+# Versions live in bin/tool-versions; bump them there and run bin/verify.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+start=$SECONDS
+fast=""; [ "${1:-}" = --fast ] && fast=1
+
+# shellcheck source=bin/tool-versions
+. bin/tool-versions
+
+log() { printf '==> %s\n' "$*"; }
+have() { command -v "$1" >/dev/null 2>&1; }
+
+# The cloud image ships rustup; a bare VM may not.
+if ! have rustup; then
+  log "installing rustup"
+  curl -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path --default-toolchain none
+  # shellcheck disable=SC1091
+  . "${CARGO_HOME:-$HOME/.cargo}/env"
+fi
+log "rust toolchain (rust-toolchain.toml)"
+rustup toolchain install >/dev/null   # no argument: reads rust-toolchain.toml
+rustup show active-toolchain
+
+# Prebuilt binaries first (seconds, where GitHub requests are signed).
+log "cargo-leptos and wasm-bindgen"
+bin/tool-cache restore || true
+
+# Fallback: cargo install --locked builds from crates.io, which the cloud
+# sandbox can reach. ~13 minutes for cargo-leptos, ~2 for wasm-bindgen.
+cargo_install() { # cargo_install <crate> <version> <binary>
+  local crate=$1 version=$2 bin=$3
+  if have "$bin" && "$bin" --version 2>/dev/null | grep -qF "$version"; then
+    return 0
+  elif [ -n "$fast" ]; then
+    log "skipping $crate $version (--fast; the SessionStart hook will install it)"
+  else
+    log "compiling $crate $version from source (cargo-leptos takes ~13 minutes)"
+    cargo install "$crate" --version "$version" --locked --quiet
+  fi
+}
+
+wb_version=$(wasm_bindgen_version)
+if [ -z "$wb_version" ]; then
+  echo "could not find wasm-bindgen in Cargo.lock" >&2
+  exit 1
+fi
+cargo_install cargo-leptos "$CARGO_LEPTOS_VERSION" cargo-leptos
+cargo_install wasm-bindgen-cli "$wb_version" wasm-bindgen
+
+npm_install() { # npm_install <package> <version> <binary> <expected --version text>
+  local pkg=$1 version=$2 bin=$3 expect=$4
+  if have "$bin" && "$bin" --version 2>/dev/null | grep -qF -- "$expect"; then
+    log "$bin already installed ($("$bin" --version 2>/dev/null | head -1))"
+  elif have npm; then
+    log "installing $pkg@$version from npm"
+    npm install -g --silent "$pkg@$version"
+  else
+    log "npm not found; skipping $pkg (cargo-leptos will try to download $bin itself)"
+  fi
+}
+
+npm_install sass "$SASS_VERSION" sass "$SASS_VERSION"
+npm_install binaryen "$BINARYEN_VERSION" wasm-opt "version ${BINARYEN_VERSION%%.*}"
+
+# Download every crate now so the first build is compile-only.
+log "fetching crates"
+cargo fetch --quiet
+
+log "cloud-setup done in $((SECONDS - start))s"

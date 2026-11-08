@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@600&amp;display=swap');
+    .site-name {
+      font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+      font-weight: 600;
+      font-size: 112px;
+      fill: hsl(35, 25%, 96%);
+    }
+  </style>
+
+  <!-- Background (neutral-700) -->
+  <rect width="1200" height="630" fill="hsl(18, 14%, 22%)"/>
+
+  <!-- Tricolor vertical stripe (left edge) -->
+  <rect x="0"   width="200" height="630" fill="hsl(5, 62%, 60%)"/>
+  <rect x="200" width="200" height="630" fill="hsl(25, 62%, 60%)"/>
+  <rect x="400" width="200" height="630" fill="hsl(45, 62%, 60%)"/>
+
+  <!-- Title box (page-header style) -->
+  <rect x="138" y="190" width="850" height="250"
+        fill="hsl(15, 15%, 14%)"
+        stroke="hsl(28, 12%, 72%)" stroke-width="3"/>
+
+  <!-- Site name -->
+  <text x="573" y="325" text-anchor="middle" dominant-baseline="middle" class="site-name">example.com</text>
+</svg>

@@ -1,0 +1,53 @@
+# Publishes prebuilt cargo-leptos and wasm-bindgen binaries to a rolling
+# release tagged `tools`, for cloud Claude sessions (see bin/tool-cache).
+#
+# Compiling cargo-leptos on the cloud VM takes ~13 minutes, and the cloud
+# sandbox can't download the official binaries from other repos' releases,
+# but it can read this repo's. This job installs the official prebuilt
+# binaries on a GitHub runner and re-uploads them here.
+#
+# Runs when a tool version changes (bin/tool-versions, or Cargo.lock for
+# wasm-bindgen) and by hand: Actions -> Tools -> Run workflow.
+name: Tools
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - bin/tool-versions
+      - bin/tool-cache
+      - Cargo.lock
+      - .github/workflows/tools.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tools
+  cancel-in-progress: true
+
+jobs:
+  pack:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - id: versions
+        run: |
+          . bin/tool-versions
+          echo "tools=cargo-leptos@$CARGO_LEPTOS_VERSION,wasm-bindgen@$(wasm_bindgen_version)" >> "$GITHUB_OUTPUT"
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: ${{ steps.versions.outputs.tools }}
+      - run: bin/tool-cache pack "$HOME/.cargo/bin"
+      - name: Upload to the tools release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=tools
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" --prerelease --title "Build tools" \
+              --notes "Prebuilt cargo-leptos and wasm-bindgen for cloud sessions (bin/tool-cache). Replaced by the Tools workflow; not a release of the site."
+          fi
+          gh release upload "$tag" --clobber .tool-cache/*
+          gh release view "$tag" --json assets -q '.assets[] | "\(.name) \(.size)"'

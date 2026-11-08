@@ -1,0 +1,328 @@
+// ============================================
+// Variables & Design Tokens
+// ============================================
+
+// --------------------------------------------
+// Fonts: self-hosted IBM Plex (SIL OFL 1.1, see /fonts/OFL.txt)
+// --------------------------------------------
+// Latin-1 subsets from @ibm/plex-sans 1.1.0 and @ibm/plex-mono 2.5.0
+// (fonts/split/woff2). Files live in public/fonts/ and are served with an
+// immutable Cache-Control, so give a replacement file a new name rather
+// than overwriting one. The body weights are also preloaded in shell().
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/IBMPlexSans-Regular-Latin1.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/IBMPlexSans-Medium-Latin1.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/IBMPlexSans-SemiBold-Latin1.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/IBMPlexMono-Regular-Latin1.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/IBMPlexMono-SemiBold-Latin1.woff2') format('woff2');
+}
+
+// --------------------------------------------
+// Dusty Trail Theme Variables
+// --------------------------------------------
+:root {
+  // Accent Colors (Dusty Trail)
+  --accent-red:    hsl(5, 62%, 60%);
+  --accent-orange: hsl(25, 62%, 60%);
+  --accent-gold:   hsl(45, 62%, 60%);
+
+  // Bevel variants (lighter/darker for 3D effect)
+  --accent-red-light:    hsl(5, 62%, 75%);
+  --accent-red-dark:     hsl(5, 62%, 40%);
+  --accent-orange-light: hsl(25, 62%, 75%);
+  --accent-orange-dark:  hsl(25, 62%, 40%);
+  --accent-gold-light:   hsl(45, 62%, 75%);
+  --accent-gold-dark:    hsl(45, 62%, 40%);
+
+  // Warm Neutrals (hue shifts 35→12 as it darkens)
+  --neutral-50:  hsl(35, 25%, 96%);
+  --neutral-100: hsl(32, 20%, 92%);
+  --neutral-200: hsl(30, 15%, 85%);
+  --neutral-300: hsl(28, 12%, 72%);
+  --neutral-400: hsl(25, 10%, 55%);
+  --neutral-500: hsl(22, 10%, 42%);
+  --neutral-600: hsl(20, 12%, 32%);
+  --neutral-700: hsl(18, 14%, 22%);
+  --neutral-800: hsl(15, 15%, 14%);
+  --neutral-900: hsl(12, 18%, 9%);
+
+  // Font stacks
+  --font-mono: 'IBM Plex Mono', 'SF Mono', 'Consolas', monospace;
+
+  // Semantic Mappings (Light Mode Default)
+  --bg-page:     var(--neutral-600);
+  --bg-surface:  var(--neutral-100);
+  --bg-inset:    var(--neutral-200);
+  --bg-chrome:   var(--neutral-700);  // Site header/footer, LLM tip
+  --bg-title:    var(--neutral-800);  // Page headers, subtitle card
+  --border:      var(--neutral-300);
+  --border-title: var(--neutral-300); // Title box borders (can differ in dark)
+  --text-muted:  var(--neutral-500);  // 4.8:1 on surface (n400 fails AA)
+  --text-body:   var(--neutral-700);
+  --text-heading: var(--neutral-800);
+}
+
+// --------------------------------------------
+// Dark Mode Overrides
+// --------------------------------------------
+// Mixin for dark mode semantic mappings
+@mixin dark-theme {
+  --bg-page:     var(--neutral-900);
+  --bg-surface:  var(--neutral-800);
+  --bg-inset:    var(--neutral-700);
+  --bg-chrome:   var(--neutral-700);  // Site chrome (same as light)
+  --bg-title:    var(--neutral-800);  // Title boxes match surface
+  --border:      var(--neutral-600);
+  --border-title: var(--neutral-400); // Even lighter border for title pop
+  --text-muted:  var(--neutral-400);  // 4.7:1 on dark surface (n500 fails AA)
+  --text-body:   var(--neutral-200);
+  --text-heading: var(--neutral-50);
+}
+
+// Explicit dark mode
+html.theme-dark {
+  @include dark-theme;
+}
+
+// System preference (when theme-system class is present)
+html.theme-system {
+  @media (prefers-color-scheme: dark) {
+    @include dark-theme;
+  }
+}
+
+// --------------------------------------------
+// High Contrast Mode
+// --------------------------------------------
+// Light mode high contrast: pure black text, extreme light backgrounds
+html.high-contrast {
+  --bg-surface:  var(--neutral-50);
+  --bg-inset:    var(--neutral-100);
+  --text-body:   #000;
+  --text-heading: #000;
+  --text-muted:  #333;
+}
+
+// Dark mode high contrast: pure white text, extreme dark backgrounds
+html.high-contrast.theme-dark {
+  --bg-surface:  var(--neutral-900);
+  --bg-inset:    var(--neutral-800);
+  --text-body:   #fff;
+  --text-heading: #fff;
+  --text-muted:  #ccc;
+}
+
+// System dark + high contrast
+html.high-contrast.theme-system {
+  @media (prefers-color-scheme: dark) {
+    --bg-surface:  var(--neutral-900);
+    --bg-inset:    var(--neutral-800);
+    --text-body:   #fff;
+    --text-heading: #fff;
+    --text-muted:  #ccc;
+  }
+}
+
+// --------------------------------------------
+// High Contrast: Chrome Elements
+// --------------------------------------------
+// Light mode high contrast chrome
+html.high-contrast {
+  .site-header,
+  .site-footer,
+  .llm-tip {
+    background: var(--neutral-900);
+    color: var(--neutral-50);
+    border-color: var(--neutral-50);
+
+    a {
+      color: var(--neutral-50);
+
+      &:hover {
+        color: var(--accent-gold-light);
+      }
+    }
+  }
+
+  .site-header .site-title {
+    color: var(--neutral-50);
+  }
+
+  .site-header .breadcrumb-sep,
+  .site-header .breadcrumb-segment,
+  .site-header .breadcrumb-segment.inactive {
+    color: var(--neutral-50);
+  }
+
+  .site-footer .footer-message {
+    color: var(--neutral-200);
+  }
+
+  .site-footer .setting-btn {
+    background: var(--neutral-800);
+    color: var(--neutral-50);
+    border-color: var(--neutral-50);
+
+    &.active {
+      background: var(--neutral-50);
+      color: var(--neutral-900);
+    }
+  }
+
+  // Light mode - dark borders on light content surfaces
+  .page-cards > *,
+  .home .page-list {
+    border-color: var(--neutral-900);
+  }
+
+  // Subtitle card is dark, needs white border
+  .home .subtitle-card {
+    border-color: var(--neutral-50);
+  }
+}
+
+// Dark mode high contrast chrome
+html.high-contrast.theme-dark {
+  .site-header,
+  .site-footer,
+  .llm-tip {
+    background: var(--neutral-900);
+    border-color: var(--neutral-50);
+  }
+
+  .site-footer .setting-btn {
+    background: var(--neutral-900);
+    border-color: var(--neutral-50);
+
+    &.active {
+      background: var(--neutral-50);
+      color: var(--neutral-900);
+    }
+  }
+
+  // Dark mode - light borders on dark content surfaces
+  .page-cards > *,
+  .home .page-list,
+  .home .subtitle-card {
+    border-color: var(--neutral-50);
+  }
+}
+
+// System dark + high contrast chrome
+html.high-contrast.theme-system {
+  @media (prefers-color-scheme: dark) {
+    .site-header,
+    .site-footer,
+    .llm-tip {
+      background: var(--neutral-900);
+      border-color: var(--neutral-50);
+    }
+
+    .site-footer .setting-btn {
+      background: var(--neutral-900);
+      border-color: var(--neutral-50);
+
+      &.active {
+        background: var(--neutral-50);
+        color: var(--neutral-900);
+      }
+    }
+
+    // System dark mode - light borders on dark content surfaces
+    .page-cards > *,
+    .home .page-list,
+    .home .subtitle-card {
+      border-color: var(--neutral-50);
+    }
+  }
+}
+
+// --------------------------------------------
+// High Contrast: Links (traditional colors)
+// --------------------------------------------
+html.high-contrast {
+  // Light mode: classic web blue
+  a {
+    color: #0000EE;
+    text-decoration: none;
+    // &:visited { color: #551A8B; }  // Reserved for future use
+  }
+}
+
+html.high-contrast.theme-dark {
+  // Dark mode: cyan for visibility
+  a {
+    color: #00FFFF;
+    text-decoration: none;
+    // &:visited { color: #EE82EE; }  // Reserved for future use
+  }
+}
+
+html.high-contrast.theme-system {
+  @media (prefers-color-scheme: dark) {
+    a {
+      color: #00FFFF;
+      text-decoration: none;
+      // &:visited { color: #EE82EE; }  // Reserved for future use
+    }
+  }
+}
+
+// --------------------------------------------
+// High Contrast: Titles & Page Headers
+// --------------------------------------------
+html.high-contrast {
+  .page-header {
+    background: var(--neutral-900);
+    border-color: var(--neutral-50);
+
+    h1, time, .raw-link {
+      color: var(--neutral-50);
+    }
+  }
+
+  .subtitle-card {
+    background: var(--neutral-900);
+    border-color: var(--neutral-50);
+
+    p {
+      color: var(--neutral-50);
+    }
+  }
+}
+
+html.high-contrast.theme-dark,
+html.high-contrast.theme-system {
+  .page-header {
+    background: var(--neutral-900);
+    border-color: var(--neutral-50);
+  }
+}

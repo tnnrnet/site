@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+# Prebuilt cargo-leptos and wasm-bindgen binaries for cloud sessions.
+#
+#   bin/tool-cache pack <bin-dir>   gzip the binaries from <bin-dir> into
+#                                   .tool-cache/ (the Tools workflow uploads them)
+#   bin/tool-cache restore          download any that are missing or the wrong
+#                                   version into $CARGO_HOME/bin
+#
+# Why: compiling cargo-leptos from crates.io takes ~13 minutes on the cloud
+# VM (wasm-bindgen-cli ~2), longer than the environment setup script's ~5
+# minute budget, and cloud sandboxes can't download the official prebuilt
+# binaries from other people's GitHub releases. They can download this
+# repo's own releases: inside a session the agent proxy signs GitHub API
+# requests for the session's repos. The Tools workflow
+# (.github/workflows/tools.yml) installs the official prebuilt binaries on a
+# GitHub runner and re-uploads them to a rolling release tagged `tools`.
+#
+# This site's cold build is only 2-3 minutes, so only the tools are worth
+# caching, not target/.
+#
+# For a private repo, restore only works where requests are signed (a
+# cloud session's shell, so the SessionStart hook) or GH_TOKEN is set. The
+# environment setup script has neither and gets a clean "not available".
+# Asset names carry the version, so a version bump can never restore a stale
+# binary; it misses, and the caller falls back to compiling.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+# shellcheck source=bin/tool-versions
+. bin/tool-versions
+
+TAG=tools
+out=.tool-cache
+bin_dir="${CARGO_HOME:-$HOME/.cargo}/bin"
+triple=$(rustc -vV 2>/dev/null | sed -n 's/^host: //p')
+triple=${triple:-x86_64-unknown-linux-gnu}
+
+# "<binary> <version>" for every cached tool
+tools() {
+  echo "cargo-leptos $CARGO_LEPTOS_VERSION"
+  echo "wasm-bindgen $(wasm_bindgen_version)"
+}
+asset_name() { echo "$1-$2-$triple.gz"; }
+has_version() { command -v "$1" >/dev/null 2>&1 && "$1" --version 2>/dev/null | grep -qF -- "$2"; }
+
+github_repo() {
+  if [ -n "${GITHUB_REPOSITORY:-}" ]; then echo "$GITHUB_REPOSITORY"; return; fi
+  git remote get-url origin 2>/dev/null | sed -E 's#^.*github\.com[:/]##; s#\.git$##'
+}
+
+gh_api() { # gh_api <accept> <curl args...>
+  curl -fsSL --max-time 120 ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} \
+    -H "Accept: $1" -H "X-GitHub-Api-Version: 2022-11-28" "${@:2}"
+}
+
+# "<id> <name>" per asset of the release, parsed without jq: split on commas,
+# then pair every "id" with the next "name" (the release's own pair never
+# matches an asset name).
+release_assets() {
+  gh_api application/vnd.github+json \
+    "https://api.github.com/repos/$(github_repo)/releases/tags/$TAG" \
+    | tr ',' '\n' \
+    | awk -F: '/"id" *:/ {id=$2+0} /"name" *:/ {n=$2; gsub(/[ "]/, "", n); print id, n}'
+}
+
+pack() {
+  local src=${1:?usage: bin/tool-cache pack <bin-dir>}
+  rm -rf "$out"; mkdir -p "$out"
+  local bin version
+  while read -r bin version; do
+    if ! "$src/$bin" --version | grep -qF -- "$version"; then
+      echo "$src/$bin is not version $version" >&2; return 1
+    fi
+    gzip -9 -c "$src/$bin" > "$out/$(asset_name "$bin" "$version")"
+  done < <(tools)
+  ls -lh "$out"
+}
+
+restore() {
+  local wanted=() bin version
+  while read -r bin version; do
+    has_version "$bin" "$version" || wanted+=("$bin $version")
+  done < <(tools)
+  if [ ${#wanted[@]} -eq 0 ]; then
+    echo "tool-cache: cargo-leptos and wasm-bindgen already installed"
+    return 0
+  fi
+
+  local assets
+  if ! assets=$(release_assets 2>/dev/null) || [ -z "$assets" ]; then
+    echo "tool-cache: '$TAG' release not reachable here (no signed GitHub access, or the Tools workflow hasn't run)"
+    return 1
+  fi
+
+  local missing=0 entry name id tmp
+  mkdir -p "$bin_dir"
+  for entry in "${wanted[@]}"; do
+    read -r bin version <<<"$entry"
+    name=$(asset_name "$bin" "$version")
+    id=$(awk -v n="$name" '$2 == n {print $1; exit}' <<<"$assets")
+    if [ -z "$id" ]; then
+      echo "tool-cache: $name not in the '$TAG' release (dispatch the Tools workflow after a version bump)"
+      missing=1; continue
+    fi
+    tmp=$(mktemp)
+    # The API redirects to object storage; curl drops the Authorization
+    # header on the host change, which is what storage expects.
+    if gh_api application/octet-stream -o "$tmp" \
+         "https://api.github.com/repos/$(github_repo)/releases/assets/$id" \
+       && gunzip -c "$tmp" > "$bin_dir/$bin.part" \
+       && chmod +x "$bin_dir/$bin.part" \
+       && mv "$bin_dir/$bin.part" "$bin_dir/$bin" \
+       && has_version "$bin" "$version"; then
+      echo "tool-cache: restored $bin $version"
+    else
+      rm -f "$bin_dir/$bin.part"
+      echo "tool-cache: failed to restore $name"
+      missing=1
+    fi
+    rm -f "$tmp"
+  done
+  return $missing
+}
+
+case ${1:-} in
+  pack) shift; pack "$@" ;;
+  restore) restore ;;
+  *) echo "usage: bin/tool-cache pack <bin-dir> | restore" >&2; exit 2 ;;
+esac

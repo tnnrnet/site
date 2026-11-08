@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dusty Trail Design System</title>
+  <style>
+    :root {
+      /* === ACCENT COLORS (Dusty Trail) === */
+      --accent-red:    hsl(5, 62%, 60%);
+      --accent-orange: hsl(25, 62%, 60%);
+      --accent-gold:   hsl(45, 62%, 60%);
+      
+      /* === WARM NEUTRALS === */
+      --neutral-50:  hsl(35, 25%, 96%);
+      --neutral-100: hsl(32, 20%, 92%);
+      --neutral-200: hsl(30, 15%, 85%);
+      --neutral-300: hsl(28, 12%, 72%);
+      --neutral-400: hsl(25, 10%, 55%);
+      --neutral-500: hsl(22, 10%, 42%);
+      --neutral-600: hsl(20, 12%, 32%);
+      --neutral-700: hsl(18, 14%, 22%);
+      --neutral-800: hsl(15, 15%, 14%);
+      --neutral-900: hsl(12, 18%, 9%);
+
+      /* === SEMANTIC MAPPINGS === */
+      --bg-page:     var(--neutral-100);
+      --bg-surface:  var(--neutral-50);
+      --bg-inset:    var(--neutral-200);
+      --border:      var(--neutral-300);
+      --text-muted:  var(--neutral-400);
+      --text-body:   var(--neutral-700);
+      --text-heading: var(--neutral-800);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg-page);
+      color: var(--text-body);
+      padding: 2rem;
+      line-height: 1.6;
+    }
+
+    h1, h2, h3 { color: var(--text-heading); }
+    h1 { font-size: 1.75rem; margin-bottom: 0.5rem; }
+    h2 { font-size: 1.25rem; margin-bottom: 0.75rem; margin-top: 2rem; }
+    h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+
+    .subtitle {
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+    }
+
+    /* === PALETTE DISPLAY === */
+    .palette-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .swatch {
+      width: 80px;
+      height: 60px;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 6px;
+      font-size: 0.65rem;
+      font-family: monospace;
+      border: 1px solid var(--border);
+    }
+    .swatch-label {
+      font-weight: 600;
+      opacity: 0.8;
+    }
+
+    .section {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* === DISCRETE STRIPES === */
+    .stripe-tri {
+      display: flex;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .stripe-tri > span {
+      flex: 1;
+    }
+    .stripe-tri .s-red    { background: var(--accent-red); }
+    .stripe-tri .s-orange { background: var(--accent-orange); }
+    .stripe-tri .s-gold   { background: var(--accent-gold); }
+
+    /* Horizontal stripe heights */
+    .stripe-sm { height: 6px; }
+    .stripe-md { height: 12px; }
+    .stripe-lg { height: 18px; }
+
+    /* Vertical stripes */
+    .stripe-tri-vertical {
+      display: flex;
+      flex-direction: column;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .stripe-tri-vertical > span {
+      flex: 1;
+    }
+    .stripe-v-sm { width: 6px; }
+    .stripe-v-md { width: 12px; }
+    .stripe-v-lg { width: 18px; }
+
+    /* === BUTTONS === */
+    .button-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+    .btn {
+      padding: 0.6rem 1.25rem;
+      border: 3px solid var(--neutral-700);
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      box-shadow: 3px 3px 0 var(--neutral-700);
+      transition: all 0.1s ease;
+      background: var(--bg-surface);
+      color: var(--text-heading);
+    }
+    .btn:hover {
+      transform: translate(1px, 1px);
+      box-shadow: 2px 2px 0 var(--neutral-700);
+    }
+    .btn-red    { background: var(--accent-red); }
+    .btn-orange { background: var(--accent-orange); }
+    .btn-gold   { background: var(--accent-gold); }
+    .btn-ghost {
+      background: transparent;
+      border-color: var(--neutral-400);
+      box-shadow: 3px 3px 0 var(--neutral-400);
+      color: var(--text-body);
+    }
+
+    /* === CARD EXAMPLE === */
+    .card {
+      background: var(--bg-surface);
+      border: 2px solid var(--neutral-300);
+      border-radius: 8px;
+      overflow: hidden;
+      max-width: 360px;
+    }
+    .card-body {
+      padding: 1.25rem;
+    }
+    .card-title {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: var(--text-heading);
+    }
+    .card-text {
+      font-size: 0.9rem;
+      color: var(--text-body);
+      margin-bottom: 1rem;
+    }
+
+    /* === INSET PANEL === */
+    .inset {
+      background: var(--bg-inset);
+      border-radius: 6px;
+      padding: 1rem;
+      font-size: 0.85rem;
+      font-family: monospace;
+      color: var(--text-body);
+      border: 1px solid var(--border);
+    }
+
+    /* === HEADER EXAMPLE === */
+    .header-demo {
+      background: var(--neutral-800);
+      color: var(--neutral-100);
+      padding: 1rem 1.5rem;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header-demo h3 {
+      color: var(--neutral-50);
+      margin: 0;
+    }
+    .header-body {
+      background: var(--bg-surface);
+      padding: 1.5rem;
+      border: 2px solid var(--neutral-800);
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+    }
+
+    /* === SIDE STRIPE LAYOUT === */
+    .side-stripe-container {
+      display: flex;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 2px solid var(--neutral-700);
+    }
+    .side-stripe-content {
+      flex: 1;
+      padding: 1.25rem;
+      background: var(--bg-surface);
+    }
+
+    /* === DARK VARIANT === */
+    .dark-section {
+      background: var(--neutral-800);
+      color: var(--neutral-200);
+      border-color: var(--neutral-700);
+    }
+    .dark-section h2,
+    .dark-section h3 {
+      color: var(--neutral-50);
+    }
+    .dark-section .btn {
+      border-color: var(--neutral-50);
+      box-shadow: 3px 3px 0 var(--neutral-900);
+    }
+    .dark-section .inset {
+      background: var(--neutral-900);
+      border-color: var(--neutral-700);
+      color: var(--neutral-300);
+    }
+
+    /* === CODE DISPLAY === */
+    .code-block {
+      background: var(--neutral-800);
+      color: var(--neutral-200);
+      padding: 1rem;
+      border-radius: 6px;
+      font-family: 'SF Mono', 'Consolas', monospace;
+      font-size: 0.8rem;
+      overflow-x: auto;
+      margin-top: 1rem;
+    }
+    .code-block .comment { color: var(--neutral-500); }
+    .code-block .property { color: var(--accent-gold); }
+    .code-block .value { color: var(--accent-orange); }
+
+    /* === STRIPE VARIATIONS DEMO === */
+    .stripe-variations {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .stripe-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: monospace;
+      margin-bottom: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Dusty Trail Design System</h1>
+  <p class="subtitle">Warm sunset accents + complementary neutral palette</p>
+
+  <div class="stripe-tri stripe-lg" style="margin-bottom: 2rem;">
+    <span class="s-red"></span>
+    <span class="s-orange"></span>
+    <span class="s-gold"></span>
+  </div>
+
+  <!-- Accent Colors -->
+  <div class="section">
+    <h2>Accent Colors</h2>
+    <p style="margin-bottom: 1rem; color: var(--text-muted);">The Dusty Trail trio—for buttons, headers, highlights, stripes.</p>
+    <div class="palette-row">
+      <div class="swatch" style="background: var(--accent-red); color: #fff;">
+        <span class="swatch-label">Red</span>
+        <span>hsl(5,62%,60%)</span>
+      </div>
+      <div class="swatch" style="background: var(--accent-orange); color: #000;">
+        <span class="swatch-label">Orange</span>
+        <span>hsl(25,62%,60%)</span>
+      </div>
+      <div class="swatch" style="background: var(--accent-gold); color: #000;">
+        <span class="swatch-label">Gold</span>
+        <span>hsl(45,62%,60%)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stripe Variations -->
+  <div class="section">
+    <h2>Stripe Variations</h2>
+    <p style="margin-bottom: 1.5rem; color: var(--text-muted);">Discrete bands, not gradients. Various weights.</p>
+    
+    <div class="stripe-variations">
+      <div>
+        <div class="stripe-label">stripe-sm (6px)</div>
+        <div class="stripe-tri stripe-sm">
+          <span class="s-red"></span>
+          <span class="s-orange"></span>
+          <span class="s-gold"></span>
+        </div>
+      </div>
+      <div>
+        <div class="stripe-label">stripe-md (12px)</div>
+        <div class="stripe-tri stripe-md">
+          <span class="s-red"></span>
+          <span class="s-orange"></span>
+          <span class="s-gold"></span>
+        </div>
+      </div>
+      <div>
+        <div class="stripe-label">stripe-lg (18px)</div>
+        <div class="stripe-tri stripe-lg">
+          <span class="s-red"></span>
+          <span class="s-orange"></span>
+          <span class="s-gold"></span>
+        </div>
+      </div>
+      <div>
+        <div class="stripe-label">Unequal weights (2:1:1)</div>
+        <div class="stripe-tri stripe-md">
+          <span class="s-red" style="flex: 2;"></span>
+          <span class="s-orange" style="flex: 1;"></span>
+          <span class="s-gold" style="flex: 1;"></span>
+        </div>
+      </div>
+      <div>
+        <div class="stripe-label">Reversed order</div>
+        <div class="stripe-tri stripe-md">
+          <span class="s-gold"></span>
+          <span class="s-orange"></span>
+          <span class="s-red"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Neutral Scale -->
+  <div class="section">
+    <h2>Warm Neutral Scale</h2>
+    <p style="margin-bottom: 1rem; color: var(--text-muted);">Hue drifts from 35→12 as it darkens. Saturation stays low (10-25%). Same sun-baked family.</p>
+    <div class="palette-row">
+      <div class="swatch" style="background: var(--neutral-50); color: #333;">
+        <span class="swatch-label">50</span>
+      </div>
+      <div class="swatch" style="background: var(--neutral-100); color: #333;">
+        <span class="swatch-label">100</span>
+      </div>
+      <div class="swatch" style="background: var(--neutral-200); color: #333;">
+        <span class="swatch-label">200</span>
+      </div>
+      <div class="swatch" style="background: var(--neutral-300); color: #333;">
+        <span class="swatch-label">300</span>
+      </div>
+      <div class="swatch" style="background: var(--neutral-400); color: #fff;">
+        <span class="swatch-label">400</span>
+      </div>
+      <div class="swatch" style="background: var(--neutral-500); color: #fff;">
+        <span class="swatch-label">500</span>
+      </div>
+      <div class="swatch" style="background: var(--neutral-600); color: #fff;">
+        <span class="swatch-label">600</span>
+      </div>
+      <div class="swatch" style="background: var(--neutral-700); color: #fff;">
+        <span class="swatch-label">700</span>
+      </div>
+      <div class="swatch" style="background: var(--neutral-800); color: #fff;">
+        <span class="swatch-label">800</span>
+      </div>
+      <div class="swatch" style="background: var(--neutral-900); color: #fff;">
+        <span class="swatch-label">900</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Buttons -->
+  <div class="section">
+    <h2>Buttons</h2>
+    <p style="color: var(--text-muted);">Chunky retro style with accent colors for primary actions.</p>
+    <div class="button-row">
+      <button class="btn btn-red">Primary</button>
+      <button class="btn btn-orange">Secondary</button>
+      <button class="btn btn-gold">Tertiary</button>
+      <button class="btn">Neutral</button>
+      <button class="btn btn-ghost">Ghost</button>
+    </div>
+  </div>
+
+  <!-- Card with Stripe -->
+  <div class="section">
+    <h2>Card with Top Stripe</h2>
+    <p style="color: var(--text-muted); margin-bottom: 1rem;">Subtle way to bring the accent in without overwhelming.</p>
+    <div class="card">
+      <div class="stripe-tri stripe-sm">
+        <span class="s-red"></span>
+        <span class="s-orange"></span>
+        <span class="s-gold"></span>
+      </div>
+      <div class="card-body">
+        <h3 class="card-title">Project Update</h3>
+        <p class="card-text">The neutral background lets content breathe while the stripe adds personality at a glance.</p>
+        <button class="btn btn-orange">View Details</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Side Stripe Layout -->
+  <div class="section">
+    <h2>Side Stripe Layout</h2>
+    <p style="color: var(--text-muted); margin-bottom: 1rem;">Vertical stripe—good for callouts or aside content.</p>
+    <div class="side-stripe-container">
+      <div class="stripe-tri-vertical stripe-v-md" style="min-height: 100%;">
+        <span class="s-red"></span>
+        <span class="s-orange"></span>
+        <span class="s-gold"></span>
+      </div>
+      <div class="side-stripe-content">
+        <h3>A Note on Design</h3>
+        <p style="font-size: 0.9rem;">The vertical bands read as intentional and styled without demanding attention. Works well for tips, quotes, or secondary information.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header with Stripe -->
+  <div class="section">
+    <h2>Header with Underline Stripe</h2>
+    <p style="color: var(--text-muted); margin-bottom: 1rem;">Dark header + thin tricolor accent.</p>
+    <div>
+      <div class="header-demo">
+        <h3>Dashboard</h3>
+        <span style="font-size: 0.85rem; color: var(--neutral-400);">Welcome back</span>
+      </div>
+      <div class="stripe-tri stripe-sm" style="border-radius: 0;">
+        <span class="s-red"></span>
+        <span class="s-orange"></span>
+        <span class="s-gold"></span>
+      </div>
+      <div class="header-body">
+        <p>Content area with the warm neutral background. The stripe bridges the dark header and light body.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dark Mode Preview -->
+  <div class="section dark-section">
+    <h2>Dark Variant</h2>
+    <p style="color: var(--neutral-400); margin-bottom: 1rem;">Same palette, inverted. The warm undertones keep it cozy rather than cold.</p>
+    <div class="stripe-tri stripe-md" style="margin-bottom: 1.5rem;">
+      <span class="s-red"></span>
+      <span class="s-orange"></span>
+      <span class="s-gold"></span>
+    </div>
+    <div class="button-row" style="margin-bottom: 1.5rem;">
+      <button class="btn btn-red">Action</button>
+      <button class="btn btn-orange">Action</button>
+      <button class="btn btn-gold">Action</button>
+    </div>
+    <div class="inset">
+      <span style="color: var(--neutral-500);">// Inset panel for code or secondary info</span><br>
+      The dark neutrals (700-900) work as backgrounds,<br>
+      while the accents pop even more.
+    </div>
+  </div>
+
+  <!-- CSS Variables Reference -->
+  <div class="section">
+    <h2>CSS Custom Properties</h2>
+    <p style="color: var(--text-muted);">Copy-paste ready for your project.</p>
+    <div class="code-block">
+<span class="comment">/* Accent Colors (Dusty Trail) */</span>
+<span class="property">--accent-red:</span>    <span class="value">hsl(5, 62%, 60%)</span>;
+<span class="property">--accent-orange:</span> <span class="value">hsl(25, 62%, 60%)</span>;
+<span class="property">--accent-gold:</span>   <span class="value">hsl(45, 62%, 60%)</span>;
+
+<span class="comment">/* Warm Neutrals */</span>
+<span class="property">--neutral-50:</span>  <span class="value">hsl(35, 25%, 96%)</span>;
+<span class="property">--neutral-100:</span> <span class="value">hsl(32, 20%, 92%)</span>;
+<span class="property">--neutral-200:</span> <span class="value">hsl(30, 15%, 85%)</span>;
+<span class="property">--neutral-300:</span> <span class="value">hsl(28, 12%, 72%)</span>;
+<span class="property">--neutral-400:</span> <span class="value">hsl(25, 10%, 55%)</span>;
+<span class="property">--neutral-500:</span> <span class="value">hsl(22, 10%, 42%)</span>;
+<span class="property">--neutral-600:</span> <span class="value">hsl(20, 12%, 32%)</span>;
+<span class="property">--neutral-700:</span> <span class="value">hsl(18, 14%, 22%)</span>;
+<span class="property">--neutral-800:</span> <span class="value">hsl(15, 15%, 14%)</span>;
+<span class="property">--neutral-900:</span> <span class="value">hsl(12, 18%, 9%)</span>;
+
+<span class="comment">/* Stripe markup */</span>
+&lt;div class="stripe-tri stripe-md"&gt;
+  &lt;span class="s-red"&gt;&lt;/span&gt;
+  &lt;span class="s-orange"&gt;&lt;/span&gt;
+  &lt;span class="s-gold"&gt;&lt;/span&gt;
+&lt;/div&gt;
+    </div>
+  </div>
+
+</body>
+</html>

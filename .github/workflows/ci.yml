@@ -1,0 +1,61 @@
+name: CI
+
+# Run on PRs and on main, not on every push to every branch (a PR branch
+# would otherwise run twice per push). Docs-only changes skip CI.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
+      - ".claude/**"
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
+      - ".claude/**"
+
+# A newer push to the same branch cancels the run in progress.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      # rust-toolchain.toml pins the compiler, clippy and the wasm target.
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@v2
+      # Prebuilt binary, version from bin/tool-versions. cargo-leptos then
+      # downloads sass, wasm-bindgen and wasm-opt itself; GitHub runners can
+      # reach GitHub releases, unlike cloud sandboxes (see bin/cloud-setup).
+      - id: versions
+        run: |
+          . bin/tool-versions
+          echo "cargo_leptos=$CARGO_LEPTOS_VERSION" >> "$GITHUB_OUTPUT"
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-leptos@${{ steps.versions.outputs.cargo_leptos }}
+      # Same steps agents run locally, against the production build.
+      - run: bin/verify lint release smoke
+      # Browser tests (end2end/) against the same build: the WASM/hydration
+      # side the curl-based smoke step can't see.
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: end2end/package-lock.json
+      - name: Install Playwright and Chromium
+        working-directory: end2end
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - run: bin/verify e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: end2end/playwright-report/
+          retention-days: 7

@@ -1,0 +1,219 @@
+#!/usr/bin/env bash
+# Everything an agent (or CI, or you) can check without a screen, in one
+# command with fixed flags. Run it before committing or opening a PR.
+#
+#   bin/verify                 lint, build, smoke, e2e (fastest first)
+#   bin/verify lint            only clippy
+#   bin/verify release smoke   production build, then smoke-test it
+#
+# Steps:
+#   lint     clippy on the server (ssr) and the browser (hydrate, wasm) builds
+#   build    cargo leptos build (dev profile: includes drafts)
+#   release  cargo leptos build --release (excludes drafts, runs wasm-opt)
+#   smoke    start the most recently built server on a spare port and check
+#            routes, status codes, static files and the raw. subdomain
+#   e2e      start the built server on another spare port and run the
+#            Playwright tests in end2end/ against it (theme pre-paint,
+#            no-JS fallbacks, hydrated controls, 404s, narrow layout).
+#            Needs node and a Chromium: `npx playwright install chromium`
+#            in end2end/, or the one preinstalled in Claude cloud sessions.
+#
+# `smoke` and `e2e` use whichever of target/{debug,release}/<crate> is newer,
+# so run them after `build` or `release`. They don't touch the dev server on
+# :3000. They read the site name and domain from site.yaml and pick a post and
+# a downloadable file from what's there, so they don't depend on particular
+# content.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+# The package name, which is also the server binary and the wasm/css bundle name
+CRATE=$(sed -n 's/^name = "\(.*\)"$/\1/p' Cargo.toml | head -1)
+# A top-level `key: value` from site.yaml, unquoted
+site_field() { sed -n "s/^$1: *//p" site.yaml | head -1 | sed 's/^"\(.*\)"$/\1/'; }
+
+steps=("$@")
+[ ${#steps[@]} -eq 0 ] && steps=(lint build smoke e2e)
+
+run() {
+  local name=$1; shift
+  echo
+  echo "==> $name: $*"
+  local start=$SECONDS
+  "$@"
+  printf '    %s ok in %ds\n' "$name" $((SECONDS - start))
+}
+
+lint() {
+  cargo clippy --features ssr -- -D warnings
+  cargo clippy --lib --features hydrate --target wasm32-unknown-unknown -- -D warnings
+}
+
+# Built server lifecycle, shared by smoke and e2e. Each step starts its own
+# server on its own port and stops it when done; the EXIT trap catches the
+# rest (a failed step, ^C).
+SERVER_PID="" SERVER_LOG="" SERVER_BASE=""
+stop_server() {
+  if [ -n "$SERVER_PID" ]; then
+    kill "$SERVER_PID" 2>/dev/null || true
+    wait "$SERVER_PID" 2>/dev/null || true   # 143 (SIGTERM) is expected
+  fi
+  if [ -n "$SERVER_LOG" ]; then rm -f "$SERVER_LOG"; fi
+  SERVER_PID="" SERVER_LOG="" SERVER_BASE=""
+  return 0
+}
+trap stop_server EXIT
+
+server_log_tail() {
+  tail -n 40 "$SERVER_LOG" | sed 's/^/    | /'
+}
+
+start_server() { # start_server <port>: sets SERVER_BASE once it answers
+  local port=$1 bin
+  bin=$(ls -t "target/release/$CRATE" "target/debug/$CRATE" 2>/dev/null | head -1 || true)
+  if [ -z "$bin" ] || [ ! -d target/site/pkg ]; then
+    echo "no built site; run 'bin/verify build' (or release) first" >&2
+    return 1
+  fi
+  stop_server
+
+  local base="http://127.0.0.1:$port"
+  SERVER_LOG=$(mktemp)
+  LEPTOS_SITE_ADDR="127.0.0.1:$port" LEPTOS_SITE_ROOT=target/site \
+    LEPTOS_OUTPUT_NAME="$CRATE" LEPTOS_SITE_PKG_DIR=pkg LEPTOS_HASH_FILES=true \
+    LEPTOS_HASH_FILE_NAME=hash.txt RUST_BACKTRACE=0 \
+    "$bin" >"$SERVER_LOG" 2>&1 &
+  SERVER_PID=$!
+
+  for _ in $(seq 100); do
+    if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+      echo "    server exited during startup:"; server_log_tail; return 1
+    fi
+    if curl -fs -o /dev/null "$base/"; then
+      echo "    serving $bin on $base"
+      SERVER_BASE=$base
+      return 0
+    fi
+    sleep 0.2
+  done
+  echo "    server not answering on $base after 20s:"; server_log_tail; return 1
+}
+
+# The longest post path on the running server (it stresses the breadcrumbs),
+# from the raw index; empty if there are no posts
+longest_post() {
+  curl -s -H "Host: raw.localhost" "$SERVER_BASE/" \
+    | grep -oE '^- \[.*\]\(/posts/[^)]+\)' | sed -E 's/.*\((.*)\)$/\1/' \
+    | awk '{ print length, $0 }' | sort -rn | head -1 | cut -d' ' -f2-
+}
+
+smoke() {
+  start_server "${SMOKE_PORT:-3917}"
+  local base=$SERVER_BASE
+  local name domain post file
+  name=$(site_field name)
+  domain=$(site_field domain)
+  post=$(longest_post)
+  file=$(find public/files -maxdepth 1 -type f ! -name '.*' 2>/dev/null | sort | head -1 || true)
+
+  local failures=0
+  check() { # check <expected-status> <path> [host] [body-substring]
+    local want=$1 path=$2 host=${3:-} needle=${4:-} body status
+    body=$(mktemp)
+    status=$(curl -s -o "$body" -w '%{http_code}' ${host:+-H "Host: $host"} "$base$path" || true)
+    if [ "$status" != "$want" ]; then
+      echo "    FAIL ${host:+$host }$path: expected $want, got $status"
+      failures=$((failures + 1))
+    elif [ -n "$needle" ] && ! grep -qF -- "$needle" "$body"; then
+      echo "    FAIL ${host:+$host }$path: body lacks '$needle'"
+      failures=$((failures + 1))
+    else
+      echo "    ok   ${host:+$host }$path -> $status"
+    fi
+    rm -f "$body"
+  }
+
+  # Pages
+  check 200 / "" "<title>$name</title>"
+  check 200 /tuning
+  if [ -n "$post" ]; then check 200 "$post"; else echo "    skip post pages: no posts"; fi
+  check 404 /no-such-page "" '<header class="page-header"><h1>404'
+  check 404 /posts/no-such-post
+  check 404 /no/such/path
+  # Static files at the root and below
+  check 200 /robots.txt
+  check 200 /feed.xml "" "<rss"
+  check 200 /sitemap.xml "" "<urlset"
+  check 200 /favicon.svg
+  check 200 /site.webmanifest
+  if [ -n "$file" ]; then
+    check 200 "/files/${file##*/}"
+    # Shared by link, kept out of search, revalidated after replacement
+    local headers
+    headers=$(curl -s -o /dev/null -D - "$base/files/${file##*/}" | tr -d '\r' | tr 'A-Z' 'a-z' || true)
+    for want in "x-robots-tag: noindex" "cache-control: no-cache"; do
+      if grep -qxF -- "$want" <<<"$headers"; then
+        echo "    ok   /files/${file##*/} sends $want"
+      else
+        echo "    FAIL /files/${file##*/}: no '$want' header"
+        failures=$((failures + 1))
+      fi
+    done
+  fi
+  check 200 /fonts/IBMPlexSans-Regular-Latin1.woff2
+  check 200 /fonts/OFL.txt "" "SIL OPEN FONT LICENSE"
+  # The hashed stylesheet and wasm bundle the page actually references
+  local asset
+  for asset in $(curl -s "$base/" | grep -oE '/pkg/[^"]+\.(css|js|wasm)' | sort -u || true); do
+    check 200 "$asset"
+  done
+  # Raw markdown subdomain
+  check 200 / "raw.localhost" "# Raw Markdown Index"
+  if [ -n "$post" ]; then
+    check 200 "$post" "raw.localhost" "source: https://$domain/posts/"
+    check 200 "$post" "raw.localhost" "license: CC-BY 4.0"
+    # A post's slug isn't a page
+    check 404 "/${post#/posts/}" "raw.localhost"
+  fi
+  check 404 /no-such-page "raw.localhost"
+
+  if [ $failures -gt 0 ]; then
+    echo "    $failures check(s) failed; server log:"
+    server_log_tail
+    return 1
+  fi
+  stop_server
+}
+
+e2e() {
+  # npm ci when node_modules is missing or older than the lockfile
+  if [ ! end2end/node_modules/.package-lock.json -nt end2end/package-lock.json ]; then
+    (cd end2end && npm ci --no-audit --no-fund --loglevel=error)
+  fi
+  start_server "${E2E_PORT:-3918}"
+  local post
+  post=$(longest_post)
+  if [ -z "$post" ]; then
+    echo "    e2e needs at least one published post" >&2
+    return 1
+  fi
+  if ! (cd end2end && BASE_URL=$SERVER_BASE POST_PATH=$post npx playwright test); then
+    echo "    e2e failed; server log:"
+    server_log_tail
+    return 1
+  fi
+  stop_server
+}
+
+for step in "${steps[@]}"; do
+  case $step in
+    lint)    run lint    lint ;;
+    build)   run build   cargo leptos build ;;
+    release) run release cargo leptos build --release ;;
+    smoke)   run smoke   smoke ;;
+    e2e)     run e2e     e2e ;;
+    *) echo "unknown step: $step (lint|build|release|smoke|e2e)" >&2; exit 2 ;;
+  esac
+done
+
+echo
+echo "verify: ${steps[*]} passed"

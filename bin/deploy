@@ -1,0 +1,169 @@
+#!/usr/bin/env bash
+# Build and deploy the site from a checkout on its server. Merging to main
+# does NOT deploy; run this there (DEPLOY.md covers the one-time setup):
+#
+#   bin/deploy            pull, build, swap in, smoke-check; rolls back on failure
+#   bin/deploy rollback   put the previous build back (kept in $APP_DIR/prev)
+#
+# Steps: git pull --ff-only, then re-run the freshly pulled copy of this
+# script (bash reads a script as it runs, so the old copy mustn't carry on
+# after a pull may have changed it). Then check the service config, match
+# the wasm-bindgen CLI to Cargo.lock, release build, move the live build
+# aside to $APP_DIR/prev and swap in the binary + hash.txt + target/site,
+# restart, then smoke-check the running server. The site stays on the old
+# build if anything fails before the swap, and goes back to it if the smoke
+# check fails after.
+#
+# The systemd unit must set LEPTOS_HASH_FILES=true: with hash-files = true in
+# Cargo.toml the bundles are only written under hashed names, and the server
+# learns those names from hash.txt next to its binary.
+#
+# Settings, from the environment (defaults match DEPLOY.md's example unit):
+#   DEPLOY_SERVICE  systemd unit that runs the site     (leptos)
+#   DEPLOY_OWNER    owner:group for the installed build (leptos:leptos)
+#   APP_DIR         where the unit runs the build from  (/var/lib/leptos)
+#   SITE_ADDR       address the server listens on       (127.0.0.1:3000)
+# The binary name comes from Cargo.toml, and the raw host checked after a
+# deploy from site.yaml's domain.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+source bin/tool-versions
+
+SERVICE=${DEPLOY_SERVICE:-leptos}
+OWNER=${DEPLOY_OWNER:-leptos:leptos}
+APP_DIR=${APP_DIR:-/var/lib/leptos}
+SITE_ADDR=${SITE_ADDR:-127.0.0.1:3000}
+PREV=$APP_DIR/prev
+# The package name: the server binary and the /pkg bundle names
+CRATE=$(sed -n 's/^name = "\(.*\)"$/\1/p' Cargo.toml | head -1)
+RAW_HOST=raw.$(sed -n 's/^domain: *//p' site.yaml | head -1 | sed 's/^"\(.*\)"$/\1/')
+
+step() { echo; echo "==> $*"; }
+die() { echo "deploy: $*" >&2; exit 1; }
+
+# Checks the running server. Returns non-zero (rather than exiting) so a
+# failed deploy can roll back. It runs as an `if` condition, where set -e is
+# off, so every check returns explicitly.
+smoke() {
+  local home assets a code
+  for _ in $(seq 1 30); do
+    curl -fsS -o /dev/null "http://$SITE_ADDR/" 2>/dev/null && break
+    sleep 1
+  done
+  home=$(curl -fsS "http://$SITE_ADDR/") || { echo "    home page not answering" >&2; return 1; }
+  assets=$(grep -oE "/pkg/$CRATE\\.[A-Za-z0-9_-]+\\.(css|js|wasm)" <<<"$home" | sort -u || true)
+  if [ "$(grep -c . <<<"$assets")" -lt 3 ]; then
+    echo "    home page doesn't link hashed css/js/wasm bundles; it links:" >&2
+    grep -oE '/pkg/[^"]+' <<<"$home" | sort -u | sed 's/^/      /' >&2 || true
+    return 1
+  fi
+  for a in $assets; do
+    code=$(curl -s -o /dev/null -w '%{http_code}' "http://$SITE_ADDR$a" || true)
+    echo "    $code $a"
+    [ "$code" = 200 ] || return 1
+  done
+  code=$(curl -s -o /dev/null -w '%{http_code}' -H "Host: $RAW_HOST" "http://$SITE_ADDR/" || true)
+  echo "    $code $RAW_HOST/"
+  [ "$code" = 200 ] || return 1
+}
+
+# $APP_DIR belongs to the service's user and usually isn't readable by the
+# deploying user, so every look inside it goes through sudo, existence checks
+# included.
+has() { sudo test -e "$1"; }
+
+# Live build -> $PREV, new build -> live. Only the latest previous build is kept.
+install_build() {
+  sudo systemctl stop "$SERVICE"
+  sudo rm -rf "$PREV"
+  sudo mkdir -p "$PREV" "$APP_DIR/target"
+  if has "$APP_DIR/app"; then sudo mv "$APP_DIR/app" "$PREV/app"; fi
+  if has "$APP_DIR/hash.txt"; then sudo mv "$APP_DIR/hash.txt" "$PREV/hash.txt"; fi
+  if has "$APP_DIR/target/site"; then sudo mv "$APP_DIR/target/site" "$PREV/site"; fi
+  # Never copy into an existing site dir: cp -r would nest it as site/site.
+  sudo rm -rf "$APP_DIR/target/site"
+  sudo cp -r target/site "$APP_DIR/target/site"
+  sudo cp "target/release/$CRATE" "$APP_DIR/app"
+  sudo cp target/release/hash.txt "$APP_DIR/hash.txt"
+  sudo chown -R "$OWNER" "$APP_DIR"
+  sudo systemctl restart "$SERVICE"
+}
+
+# $PREV -> live (consumes $PREV; a later bin/deploy refills it).
+rollback() {
+  has "$PREV/app" && has "$PREV/site" || die "no previous build in $PREV to roll back to; the new build is still live (journalctl -u $SERVICE -n 50)"
+  sudo systemctl stop "$SERVICE"
+  sudo rm -rf "$APP_DIR/target/site"
+  sudo mv "$PREV/site" "$APP_DIR/target/site"
+  sudo mv "$PREV/app" "$APP_DIR/app"
+  if has "$PREV/hash.txt"; then
+    sudo mv "$PREV/hash.txt" "$APP_DIR/hash.txt"
+  else
+    sudo rm -f "$APP_DIR/hash.txt"
+  fi
+  sudo rm -rf "$PREV"
+  sudo systemctl restart "$SERVICE"
+}
+
+case ${1:-} in
+  "")
+    # Pull, then hand over to the pulled copy; DEPLOY_PULLED stops it pulling again.
+    if [ -z "${DEPLOY_PULLED:-}" ]; then
+      step "pull ($(git symbolic-ref --short -q HEAD || echo detached HEAD))"
+      before=$(git rev-parse --short HEAD)
+      git pull --ff-only --quiet
+      after=$(git rev-parse --short HEAD)
+      if [ "$before" = "$after" ]; then echo "    already at $after"; else echo "    $before -> $after"; fi
+      DEPLOY_PULLED=1 exec "$PWD/bin/deploy" "$@"
+    fi ;;
+  rollback)
+    step "rollback to the previous build (sudo)"
+    rollback
+    step "smoke check http://$SITE_ADDR"
+    smoke || die "previous build is back but fails the smoke check; journalctl -u $SERVICE -n 50"
+    echo; echo "Rolled back successfully"
+    exit 0 ;;
+  *) echo "usage: bin/deploy [rollback]" >&2; exit 2 ;;
+esac
+
+# First, because it takes seconds and the build takes minutes.
+step "service config"
+env=$(systemctl show "$SERVICE" -p Environment --value)
+case " $env " in
+  *" LEPTOS_HASH_FILES=true "*) echo "    LEPTOS_HASH_FILES=true ok" ;;
+  *) die "$SERVICE.service lacks LEPTOS_HASH_FILES=true (add it to the unit's Environment, see DEPLOY.md). Not deploying: pages would link unhashed bundles that don't exist." ;;
+esac
+
+step "wasm-bindgen CLI"
+want=$(wasm_bindgen_version)
+have=$(wasm-bindgen --version 2>/dev/null | awk '{print $2}' || true)
+if [ "$have" != "$want" ]; then
+  echo "    have ${have:-none}, Cargo.lock needs $want: installing"
+  cargo install -f wasm-bindgen-cli --version "$want" --locked
+else
+  echo "    $have ok"
+fi
+have_leptos=$(cargo leptos --version 2>/dev/null | awk '{print $2}' || true)
+if [ "$have_leptos" != "$CARGO_LEPTOS_VERSION" ]; then
+  echo "    note: cargo-leptos is ${have_leptos:-missing}, bin/tool-versions pins $CARGO_LEPTOS_VERSION"
+fi
+
+step "build (release)"
+cargo leptos build --release
+[ -f target/release/hash.txt ] || die "target/release/hash.txt missing after build"
+
+step "install to $APP_DIR (sudo; previous build kept in $PREV)"
+install_build
+
+step "smoke check http://$SITE_ADDR"
+if ! smoke; then
+  step "smoke check failed: restoring the previous build"
+  rollback
+  if smoke; then
+    die "new build failed the smoke check; the previous build is back and answering"
+  fi
+  die "new build failed the smoke check, and so does the restored previous build; journalctl -u $SERVICE -n 50"
+fi
+
+echo
+echo "Deployed $(git rev-parse --short HEAD) successfully"

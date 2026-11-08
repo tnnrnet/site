@@ -1,0 +1,1000 @@
+// ============================================
+// Control Panel - Synth/Moog Style Settings
+// ============================================
+// Progressive enhancement: all controls are native
+// HTML inputs (checkbox, radio, range) styled for delight.
+
+// The settings page's title block is the shared .page-header
+// (_components.scss), same as every other page.
+
+.control-panel {
+  background: var(--neutral-800);
+  border: 2px solid var(--border);
+  padding: clamp(20px, 5vw, 30px);
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+// Dymo label tape style
+.panel-section-label {
+  display: inline-block;
+  background: linear-gradient(180deg, var(--neutral-100), var(--neutral-200));
+  color: var(--neutral-800);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.25rem 0.6rem;
+  margin: 0 0 0.5rem 0;
+  align-self: flex-start;
+  border-radius: 2px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.5),
+    0 1px 2px rgba(0,0,0,0.3);
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+}
+
+// --------------------------------------------
+// Toggle Switch (styled checkbox)
+// --------------------------------------------
+.toggle-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 56px;
+  height: 32px;
+  background: var(--neutral-900);
+  border-radius: 4px;
+  box-shadow:
+    inset 2px 2px 4px rgba(0,0,0,0.5),
+    inset -1px -1px 2px rgba(255,255,255,0.05);
+  border: 2px solid;
+  border-top-color: var(--neutral-700);
+  border-left-color: var(--neutral-700);
+  border-bottom-color: var(--neutral-600);
+  border-right-color: var(--neutral-600);
+
+  // Vertical detent markers (left and right positions)
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 6px;
+    background: var(--neutral-600);
+    border-radius: 1px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  &::before {
+    left: 14px;
+  }
+
+  &::after {
+    right: 14px;
+  }
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  z-index: 1; // Above detent markers
+  background: linear-gradient(180deg, var(--neutral-400), var(--neutral-500));
+  border-radius: 2px;
+  transition: transform 0.15s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  border: 2px solid;
+  border-top-color: var(--neutral-300);
+  border-left-color: var(--neutral-300);
+  border-bottom-color: var(--neutral-600);
+  border-right-color: var(--neutral-600);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 2px;
+    height: 10px;
+    background: var(--neutral-600);
+    box-shadow:
+      -4px 0 0 var(--neutral-600),
+      4px 0 0 var(--neutral-600);
+  }
+}
+
+.toggle-input:checked + .toggle-switch .toggle-slider {
+  transform: translateX(24px);
+}
+
+.toggle-input:focus-visible + .toggle-switch {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+}
+
+.toggle-led {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--neutral-700);
+  box-shadow:
+    inset 1px 1px 2px rgba(0,0,0,0.5),
+    inset -1px -1px 1px rgba(255,255,255,0.1);
+  border: 1px solid var(--neutral-600);
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.toggle-input:checked ~ .toggle-led {
+  background: var(--accent-orange);
+  box-shadow:
+    inset 1px 1px 2px rgba(255,255,255,0.3),
+    0 0 8px var(--accent-orange),
+    0 0 16px rgba(210, 140, 90, 0.4);
+  border-color: transparent;
+}
+
+.toggle-label {
+  color: var(--neutral-200);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+// --------------------------------------------
+// Vertical 3-Position Switch (theme selector)
+// --------------------------------------------
+.vswitch-control {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.vswitch-container {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.vswitch-track {
+  position: relative;
+  width: 32px;
+  height: 80px;
+  background: var(--neutral-900);
+  border-radius: 4px;
+  box-shadow:
+    inset 2px 2px 4px rgba(0,0,0,0.5),
+    inset -1px -1px 2px rgba(255,255,255,0.05);
+  border: 2px solid;
+  border-top-color: var(--neutral-700);
+  border-left-color: var(--neutral-700);
+  border-bottom-color: var(--neutral-600);
+  border-right-color: var(--neutral-600);
+  display: flex;
+  flex-direction: column;
+}
+
+.vswitch-position {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.vswitch-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+// Small detent markers
+.vswitch-detent {
+  width: 6px;
+  height: 2px;
+  background: var(--neutral-600);
+  border-radius: 1px;
+}
+
+// The sliding lever
+.vswitch-lever {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  height: 22px;
+  background: linear-gradient(180deg, var(--neutral-400), var(--neutral-500));
+  border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  border: 2px solid;
+  border-top-color: var(--neutral-300);
+  border-left-color: var(--neutral-300);
+  border-bottom-color: var(--neutral-600);
+  border-right-color: var(--neutral-600);
+  transition: top 0.15s ease;
+  // Default: top position (Light)
+  top: 3px;
+
+  // Grip lines
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 2px;
+    background: var(--neutral-600);
+    box-shadow:
+      0 -4px 0 var(--neutral-600),
+      0 4px 0 var(--neutral-600);
+  }
+}
+
+// Lever positions based on checked radio
+.vswitch-track:has([data-pos="0"] .vswitch-input:checked) .vswitch-lever {
+  top: 3px;
+}
+.vswitch-track:has([data-pos="1"] .vswitch-input:checked) .vswitch-lever {
+  top: 27px;
+}
+.vswitch-track:has([data-pos="2"] .vswitch-input:checked) .vswitch-lever {
+  top: 51px;
+}
+
+.vswitch-input:focus-visible ~ .vswitch-detent {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+}
+
+// Indicators column (LED + label for each position)
+.vswitch-indicators {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.vswitch-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+// LED - off by default (matches toggle-led)
+.vswitch-led {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--neutral-700);
+  box-shadow:
+    inset 1px 1px 2px rgba(0,0,0,0.5),
+    inset -1px -1px 1px rgba(255,255,255,0.1);
+  border: 1px solid var(--neutral-600);
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.vswitch-label {
+  font-size: 0.9rem;
+  color: var(--neutral-200);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+// Light up LED + highlight label when position is selected
+.vswitch-container:has([data-pos="0"] .vswitch-input:checked) .vswitch-indicator[data-pos="0"] .vswitch-led,
+.vswitch-container:has([data-pos="1"] .vswitch-input:checked) .vswitch-indicator[data-pos="1"] .vswitch-led,
+.vswitch-container:has([data-pos="2"] .vswitch-input:checked) .vswitch-indicator[data-pos="2"] .vswitch-led {
+  background: var(--accent-orange);
+  box-shadow:
+    inset 1px 1px 2px rgba(255,255,255,0.3),
+    0 0 6px var(--accent-orange),
+    0 0 12px rgba(210, 140, 90, 0.4);
+  border-color: transparent;
+}
+
+// Label color no longer changes - "printed on box" aesthetic
+// State indicated by LED only
+
+// --------------------------------------------
+// Rotary Knob (DEPRECATED - kept for reference)
+// --------------------------------------------
+/*
+.rotary-control { ... }
+.rotary-knob-container { ... }
+.rotary-knob { ... }
+.rotary-dial { ... }
+.rotary-pointer { ... }
+.rotary-position { ... }
+.rotary-input { ... }
+.rotary-led { ... }
+.rotary-pos-label { ... }
+*/
+
+// --------------------------------------------
+// Slider / Fader (styled range input)
+// --------------------------------------------
+.slider-control {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.slider-label {
+  color: var(--neutral-200);
+  font-size: 0.9rem;
+  font-weight: 500;
+  min-width: 80px;
+}
+
+.slider-track-container {
+  position: relative;
+  width: 140px;
+  height: 32px;
+}
+
+.slider-input {
+  // Reset native appearance
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  cursor: pointer;
+
+  // Track styling - WebKit (Chrome, Safari, Edge)
+  &::-webkit-slider-runnable-track {
+    height: 28px;
+    background: var(--neutral-900);
+    border-radius: 4px;
+    box-shadow:
+      inset 2px 2px 4px rgba(0,0,0,0.5),
+      inset -1px -1px 2px rgba(255,255,255,0.05);
+    border: 2px solid var(--neutral-700);
+  }
+
+  // Track styling - Firefox
+  &::-moz-range-track {
+    height: 28px;
+    background: var(--neutral-900);
+    border-radius: 4px;
+    box-shadow:
+      inset 2px 2px 4px rgba(0,0,0,0.5),
+      inset -1px -1px 2px rgba(255,255,255,0.05);
+    border: 2px solid var(--neutral-700);
+  }
+
+  // Thumb (fader) styling - WebKit
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 22px;
+    margin-top: 1px;
+    background: linear-gradient(180deg, var(--neutral-400), var(--neutral-500));
+    border-radius: 3px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    border: 2px solid;
+    border-top-color: var(--neutral-300);
+    border-left-color: var(--neutral-300);
+    border-bottom-color: var(--neutral-600);
+    border-right-color: var(--neutral-600);
+    cursor: grab;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+
+  // Thumb styling - Firefox
+  &::-moz-range-thumb {
+    width: 24px;
+    height: 22px;
+    background: linear-gradient(180deg, var(--neutral-400), var(--neutral-500));
+    border-radius: 3px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    border: 2px solid;
+    border-top-color: var(--neutral-300);
+    border-left-color: var(--neutral-300);
+    border-bottom-color: var(--neutral-600);
+    border-right-color: var(--neutral-600);
+    cursor: grab;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+
+  // Focus state
+  &:focus-visible {
+    outline: none;
+
+    &::-webkit-slider-runnable-track {
+      outline: 2px solid var(--accent-gold);
+      outline-offset: 2px;
+    }
+
+    &::-moz-range-track {
+      outline: 2px solid var(--accent-gold);
+      outline-offset: 2px;
+    }
+  }
+}
+
+.slider-value {
+  color: var(--neutral-300);
+  font-size: 0.8rem;
+  font-family: 'IBM Plex Mono', monospace;
+  min-width: 40px;
+}
+
+// --------------------------------------------
+// Seven-Segment Display (for numeric values)
+// --------------------------------------------
+// Classic LED calculator aesthetic
+// Segments: a=top, b=top-right, c=bottom-right, d=bottom, e=bottom-left, f=top-left, g=middle
+//   aaa
+//  f   b
+//   ggg
+//  e   c
+//   ddd
+
+.seven-seg-display {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  background: var(--neutral-900);
+  border-radius: 4px;
+  box-shadow:
+    inset 2px 2px 4px rgba(0,0,0,0.5),
+    inset -1px -1px 2px rgba(255,255,255,0.05);
+  border: 2px solid var(--neutral-700);
+}
+
+.seven-seg-digit {
+  position: relative;
+  width: 20px;
+  height: 32px;
+}
+
+// Each segment is a span with class .seg-X
+.seven-seg-digit span {
+  position: absolute;
+  background: var(--neutral-700);
+  transition: background 0.1s ease, box-shadow 0.1s ease;
+}
+
+// Horizontal segments (a, d, g)
+.seg-a, .seg-d, .seg-g {
+  height: 3px;
+  width: 14px;
+  left: 3px;
+}
+.seg-a { top: 0; }
+.seg-d { bottom: 0; }
+.seg-g { top: 50%; transform: translateY(-50%); }
+
+// Vertical segments (b, c, e, f)
+.seg-b, .seg-c, .seg-e, .seg-f {
+  width: 3px;
+  height: 12px;
+}
+.seg-f { left: 0; top: 3px; }
+.seg-b { right: 0; top: 3px; }
+.seg-e { left: 0; bottom: 3px; }
+.seg-c { right: 0; bottom: 3px; }
+
+// Active (lit) segment
+.seven-seg-digit span.on {
+  background: var(--accent-red);
+  box-shadow: 0 0 4px var(--accent-red), 0 0 8px rgba(210, 100, 90, 0.4);
+}
+
+// Digit patterns - which segments are on for each number
+// 0: a b c d e f    (all except g)
+// 1: b c
+// 2: a b g e d
+// 3: a b g c d
+// 4: f g b c
+// 5: a f g c d
+// 6: a f e d c g
+// 7: a b c
+// 8: all
+// 9: a b c d f g
+
+// --------------------------------------------
+// Button Bank (illuminated radio group)
+// --------------------------------------------
+.button-bank {
+  display: flex;
+  gap: 0.5rem;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.bank-button {
+  cursor: pointer;
+}
+
+.bank-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.bank-btn-face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.8rem;
+  background: linear-gradient(180deg, var(--neutral-500), var(--neutral-600));
+  border-radius: 4px;
+  border: 2px solid;
+  border-top-color: var(--neutral-400);
+  border-left-color: var(--neutral-400);
+  border-bottom-color: var(--neutral-700);
+  border-right-color: var(--neutral-700);
+  transition: all 0.1s ease;
+}
+
+.bank-button:hover .bank-btn-face {
+  background: linear-gradient(180deg, var(--neutral-400), var(--neutral-500));
+}
+
+.bank-input:checked + .bank-btn-face {
+  background: linear-gradient(180deg, var(--neutral-600), var(--neutral-700));
+  border-top-color: var(--neutral-700);
+  border-left-color: var(--neutral-700);
+  border-bottom-color: var(--neutral-500);
+  border-right-color: var(--neutral-500);
+}
+
+.bank-led {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--neutral-700);
+  box-shadow:
+    inset 1px 1px 2px rgba(0,0,0,0.5),
+    inset -1px -1px 1px rgba(255,255,255,0.1);
+  border: 1px solid var(--neutral-600);
+  transition: all 0.15s ease;
+}
+
+.bank-input:checked + .bank-btn-face .bank-led {
+  background: var(--accent-orange);
+  box-shadow:
+    inset 1px 1px 2px rgba(255,255,255,0.3),
+    0 0 8px var(--accent-orange),
+    0 0 16px rgba(210, 140, 90, 0.4);
+  border-color: transparent;
+}
+
+.bank-label {
+  font-size: 0.7rem;
+  color: var(--neutral-300);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bank-input:focus-visible + .bank-btn-face {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+}
+
+// --------------------------------------------
+// VU Meter / LED Bar Graph
+// --------------------------------------------
+.vu-meter {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.vu-label {
+  color: var(--neutral-200);
+  font-size: 0.9rem;
+  font-weight: 500;
+  min-width: 60px;
+}
+
+.vu-bar-container {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  background: var(--neutral-900);
+  border-radius: 4px;
+  box-shadow:
+    inset 2px 2px 4px rgba(0,0,0,0.5),
+    inset -1px -1px 2px rgba(255,255,255,0.05);
+  border: 2px solid var(--neutral-700);
+}
+
+// VU meter peak jiggle - rapid needle-at-limit effect
+@keyframes vu-jiggle {
+  0%, 100% { transform: scaleY(1); opacity: 1; }
+  10% { transform: scaleY(0.88); opacity: 0.9; }
+  20% { transform: scaleY(1); opacity: 1; }
+  35% { transform: scaleY(0.92); opacity: 0.95; }
+  50% { transform: scaleY(1); opacity: 1; }
+  65% { transform: scaleY(0.9); opacity: 0.92; }
+  80% { transform: scaleY(1); opacity: 1; }
+  90% { transform: scaleY(0.94); opacity: 0.97; }
+}
+
+.vu-led {
+  width: 8px;
+  height: 20px;
+  border-radius: 2px;
+  background: var(--neutral-700);
+  box-shadow: inset 1px 1px 2px rgba(0,0,0,0.3);
+  transition: all 0.15s ease;
+
+  // Green active LEDs - solid glow
+  &.active {
+    background: hsl(120, 50%, 45%);
+    box-shadow:
+      inset 1px 1px 2px rgba(255,255,255,0.2),
+      0 0 4px hsl(120, 50%, 45%);
+  }
+
+  // Peak LEDs - rapid jiggle like needle at limit
+  &.active.peak {
+    background: var(--accent-red);
+    box-shadow:
+      inset 1px 1px 2px rgba(255,255,255,0.2),
+      0 0 6px var(--accent-red);
+    animation: vu-jiggle 0.4s ease-in-out infinite;
+
+    &[data-level="9"] { animation-delay: 0s; }
+    &[data-level="10"] { animation-delay: 0.15s; }
+  }
+}
+
+// --------------------------------------------
+// Power Switch (rocker style with I/O labels)
+// --------------------------------------------
+.panel-section-power {
+  margin-top: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--neutral-700);
+}
+
+.power-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.power-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+// Rocker switch - two-half see-saw with wedge geometry
+// When one half goes DOWN (flat), the other comes UP (wedge with visible top edge)
+
+.power-rocker {
+  display: block;
+}
+
+.rocker-housing {
+  display: flex;
+  flex-direction: column;
+  width: 44px;
+  gap: 0;
+  background: var(--neutral-900);
+  border-radius: 6px;
+  padding: 4px;
+  box-shadow:
+    inset 3px 3px 6px rgba(0,0,0,0.5),
+    inset -2px -2px 4px rgba(255,255,255,0.05);
+  border: 3px solid;
+  border-top-color: var(--neutral-700);
+  border-left-color: var(--neutral-700);
+  border-bottom-color: var(--neutral-600);
+  border-right-color: var(--neutral-600);
+}
+
+// Inner wrapper that clips the rocker halves to rounded corners
+.rocker-clip {
+  display: flex;
+  flex-direction: column;
+  clip-path: inset(0 round 6px);
+}
+
+// Each rocker half - base styles
+.rocker-half {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 24px;
+  border-radius: 0; // No rounded corners - halves are contiguous
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--neutral-700);
+  user-select: none;
+  background: var(--neutral-400); // Flat for subtlety; gradient on ::before edge
+  transition: transform 0.15s ease, background 0.15s ease;
+
+  // The extra face - positioned differently per half
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 0;
+    background: linear-gradient(180deg, var(--neutral-300), var(--neutral-400));
+    transition: height 0.15s ease;
+  }
+}
+
+// TOP half (I) - pivots around bottom edge, extra face ABOVE
+// Trapezoid: extends to -33% for ::before above (8px / 24px)
+.rocker-half-on {
+  transform-origin: center bottom;
+  clip-path: polygon(0 -33%, 100% -33%, 97.5% 100%, 2.5% 100%);
+  &::before {
+    bottom: 100%;
+  }
+}
+
+// BOTTOM half (O) - pivots around top edge, extra face BELOW
+// Trapezoid: extends to 133% for ::before below (8px / 24px)
+.rocker-half-off {
+  transform-origin: center top;
+  clip-path: polygon(2.5% 0, 97.5% 0, 100% 133%, 0 133%);
+  &::before {
+    top: 100%;
+  }
+}
+
+// UP state (raised) - default: foreshortened with extra face visible
+.rocker-half {
+  transform: scaleY(0.75);
+  &::before { height: 8px; } // 8px actual × 0.75 = 6px visual
+}
+
+// DOWN state (pressed flat)
+@mixin rocker-down {
+  transform: scaleY(1);
+  background: var(--neutral-500); // Flat, slightly darker when pressed
+  &::before { height: 0; }
+}
+
+// ON state (checked): I is DOWN, O is UP
+.power-input:checked + .power-rocker .rocker-half-on {
+  @include rocker-down;
+}
+
+// OFF state (unchecked): I is UP, O is DOWN
+.power-input:not(:checked) + .power-rocker .rocker-half-off {
+  @include rocker-down;
+}
+
+.power-input:focus-visible + .power-rocker .rocker-housing {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+}
+
+// Red LED with slow pulse (breathing) for standby
+@keyframes led-pulse {
+  0%, 100% {
+    background: var(--accent-red);
+    box-shadow:
+      inset 1px 1px 2px rgba(255,255,255,0.2),
+      0 0 8px var(--accent-red),
+      0 0 16px rgba(210, 100, 90, 0.4);
+  }
+  50% {
+    // Darker dim phase
+    background: hsl(5, 40%, 25%);
+    box-shadow:
+      inset 1px 1px 2px rgba(0,0,0,0.2),
+      0 0 2px hsl(5, 40%, 25%);
+  }
+}
+
+.power-led {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent-red);
+  box-shadow:
+    inset 1px 1px 2px rgba(255,255,255,0.2),
+    0 0 8px var(--accent-red),
+    0 0 16px rgba(210, 100, 90, 0.4);
+  transition: all 0.3s ease;
+}
+
+// Slow breathing pulse when OFF (standby mode)
+.power-input:not(:checked) ~ .power-led {
+  animation: led-pulse 5s ease-in-out infinite;
+  // Start from dim phase (offset by half cycle)
+  animation-delay: -2.5s;
+}
+
+.power-label {
+  color: var(--neutral-200);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+// --------------------------------------------
+// High Contrast Mode
+// --------------------------------------------
+// Flatten depth cues, increase contrast, keep dark aesthetic
+// Use theme extremes (neutral-50/neutral-900) for consistency
+html.high-contrast {
+  .control-panel {
+    background: var(--neutral-900);
+    border-color: var(--neutral-50);
+  }
+
+  // Labels stay as-is (already high contrast: dark on light)
+
+  // Toggle switch - flatten
+  .toggle-switch {
+    background: var(--neutral-900);
+    box-shadow: none;
+    border: 2px solid var(--neutral-50);
+
+    &::before, &::after {
+      background: var(--neutral-500);
+    }
+  }
+
+  .toggle-slider {
+    background: var(--neutral-50);
+    box-shadow: none;
+    border: 2px solid var(--neutral-200);
+
+    &::before {
+      background: var(--neutral-500);
+      box-shadow: -4px 0 0 var(--neutral-500), 4px 0 0 var(--neutral-500);
+    }
+  }
+
+  .toggle-label {
+    color: var(--neutral-50);
+  }
+
+  .toggle-led {
+    background: var(--neutral-700);
+    box-shadow: none;
+    border-color: var(--neutral-50);
+  }
+
+  .toggle-input:checked ~ .toggle-led {
+    background: var(--accent-orange);
+    box-shadow: 0 0 8px var(--accent-orange);
+  }
+
+  // Vertical switch - flatten
+  .vswitch-track {
+    background: var(--neutral-900);
+    box-shadow: none;
+    border: 2px solid var(--neutral-50);
+  }
+
+  .vswitch-detent {
+    background: var(--neutral-500);
+  }
+
+  .vswitch-lever {
+    background: var(--neutral-50);
+    box-shadow: none;
+    border: 2px solid var(--neutral-200);
+
+    &::before {
+      background: var(--neutral-500);
+      box-shadow: 0 -4px 0 var(--neutral-500), 0 4px 0 var(--neutral-500);
+    }
+  }
+
+  .vswitch-label {
+    color: var(--neutral-50);
+  }
+
+  .vswitch-led {
+    background: var(--neutral-700);
+    box-shadow: none;
+    border-color: var(--neutral-50);
+  }
+
+  // LED lit states stay bright
+  .vswitch-container:has([data-pos="0"] .vswitch-input:checked) .vswitch-indicator[data-pos="0"] .vswitch-led,
+  .vswitch-container:has([data-pos="1"] .vswitch-input:checked) .vswitch-indicator[data-pos="1"] .vswitch-led,
+  .vswitch-container:has([data-pos="2"] .vswitch-input:checked) .vswitch-indicator[data-pos="2"] .vswitch-led {
+    box-shadow: 0 0 8px var(--accent-orange);
+  }
+
+  // Power switch - flatten
+  .rocker-housing {
+    background: var(--neutral-900);
+    box-shadow: none;
+    border: 3px solid var(--neutral-50);
+  }
+
+  .rocker-half {
+    background: var(--neutral-200);
+
+    &::before {
+      background: var(--neutral-400);
+    }
+  }
+
+  .power-input:checked + .power-rocker .rocker-half-on,
+  .power-input:not(:checked) + .power-rocker .rocker-half-off {
+    background: var(--neutral-500);
+  }
+
+  .power-led {
+    box-shadow: 0 0 8px var(--accent-red);
+  }
+
+  .power-label {
+    color: var(--neutral-50);
+  }
+
+  // Panel section divider
+  .panel-section-power {
+    border-top-color: var(--neutral-50);
+  }
+
+  // Tuning button (header)
+  .tuning-button {
+    background: var(--neutral-900);
+    box-shadow: none;
+    border: 2px solid var(--neutral-50);
+
+    &.on-tuning {
+      background: var(--neutral-900);
+      border-color: var(--neutral-50);
+    }
+  }
+
+  .tuning-led {
+    border-color: transparent; // Always glowing, never truly "off"
+  }
+
+  .tuning-label {
+    color: var(--neutral-50);
+  }
+}

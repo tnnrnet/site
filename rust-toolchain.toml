@@ -1,0 +1,11 @@
+# One compiler everywhere: your machine, the server, CI, and cloud Claude
+# sessions. rustup reads this file and installs whatever is missing (the
+# toolchain, clippy, the wasm target) the first time cargo runs, so a fresh
+# checkout needs no `rustup target add`.
+#
+# 1.97.0 is what the project was last verified with. To upgrade, bump the
+# channel, run bin/verify, and commit; it's a normal PR.
+[toolchain]
+channel = "1.97.0"
+components = ["clippy", "rustfmt"]
+targets = ["wasm32-unknown-unknown"]

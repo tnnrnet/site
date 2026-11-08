@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ \"$CLAUDE_CODE_REMOTE\" = true ]; then cd \"$CLAUDE_PROJECT_DIR\" && bin/cloud-setup 2>&1 | tail -15; fi",
+            "timeout": 1200
+          }
+        ]
+      }
+    ]
+  }
+}
