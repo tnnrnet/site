@@ -42,7 +42,7 @@ jobs:
       - run: bin/verify lint release smoke
       # Browser tests (end2end/) against the same build: the WASM/hydration
       # side the curl-based smoke step can't see.
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -53,7 +53,7 @@ jobs:
           npm ci --no-audit --no-fund
           npx playwright install --with-deps chromium
       - run: bin/verify e2e
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report
